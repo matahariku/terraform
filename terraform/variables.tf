@@ -35,6 +35,7 @@ variable "private_subnet_cidr" {
 variable "region" {
   description = "AWS Region untuk deploy"
   type        = string
+  default     = "us-east-1"
 }
 
 variable "key_name" {
