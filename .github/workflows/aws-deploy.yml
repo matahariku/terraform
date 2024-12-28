@@ -31,18 +31,32 @@ jobs:
       run: |
         echo "TF_VAR_key_name=key_cafe" >> $GITHUB_ENV
         echo "TF_VAR_region=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV
+        echo "TF_VAR_grafana_ami=${{ secrets.GRAFANA_AMI }}" >> $GITHUB_ENV
+        echo "TF_VAR_mongodb_ami=${{ secrets.MONGODB_AMI }}" >> $GITHUB_ENV
+        echo "TF_VAR_instance_type=t2.micro" >> $GITHUB_ENV
+        echo "TF_VAR_vpc_cidr=10.0.0.0/16" >> $GITHUB_ENV
+        echo "TF_VAR_public_subnet_cidr=10.0.1.0/24" >> $GITHUB_ENV
+        echo "TF_VAR_private_subnet_cidr=10.0.2.0/24" >> $GITHUB_ENV
 
-    # 5. Terraform Init
+    # 5. Debug Variables (Opsional)
+    - name: Debug Environment Variables
+      run: |
+        echo "TF_VAR_key_name=$TF_VAR_key_name"
+        echo "TF_VAR_region=$TF_VAR_region"
+        echo "TF_VAR_grafana_ami=$TF_VAR_grafana_ami"
+        echo "TF_VAR_mongodb_ami=$TF_VAR_mongodb_ami"
+
+    # 6. Terraform Init
     - name: Terraform Init
-      run: terraform init
+      run: terraform init -input=false
       working-directory: terraform/
 
-    # 6. Terraform Plan
+    # 7. Terraform Plan
     - name: Terraform Plan
-      run: terraform plan
+      run: terraform plan -input=false
       working-directory: terraform/
 
-    # 7. Terraform Apply
+    # 8. Terraform Apply
     - name: Terraform Apply
-      run: terraform apply -auto-approve
+      run: terraform apply -input=false -auto-approve
       working-directory: terraform/
