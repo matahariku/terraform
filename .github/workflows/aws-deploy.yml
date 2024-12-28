@@ -1,4 +1,4 @@
-name: Deploy AWS Instances mongodb & grafana
+name: Deploy AWS Instances
 
 on:
   push:
@@ -20,34 +20,18 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    # 3. Debug AWS Credentials (Opsional)
-    - name: Debug AWS Credentials
-      run: |
-        aws sts get-caller-identity
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-
-    # 4. Set Up Key Pair
-    - name: Set Up Key Pair
-      run: |
-        echo "${{ secrets.AWS_KEY_PAIR }}" > key_cafe.pem
-        chmod 400 key_cafe.pem
-
-    # 5. Setup Terraform
+    # 3. Setup Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: 1.5.0
 
-    # 6. Set Environment Variables
+    # 4. Set Environment Variables
     - name: Set Environment Variables
       run: |
-        echo "TF_VAR_key_name=key_cafe" >> $GITHUB_ENV
+        echo "TF_VAR_key_name=${{ secrets.AWS_KEY_PAIR }}" >> $GITHUB_ENV
         echo "TF_VAR_region=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV
         echo "TF_VAR_grafana_ami=${{ secrets.GRAFANA_AMI }}" >> $GITHUB_ENV
         echo "TF_VAR_mongodb_ami=${{ secrets.MONGODB_AMI }}" >> $GITHUB_ENV
@@ -56,17 +40,17 @@ jobs:
         echo "TF_VAR_public_subnet_cidr=10.0.1.0/24" >> $GITHUB_ENV
         echo "TF_VAR_private_subnet_cidr=10.0.2.0/24" >> $GITHUB_ENV
 
-    # 7. Terraform Init
+    # 5. Terraform Init
     - name: Terraform Init
       run: terraform init -input=false
       working-directory: terraform/
 
-    # 8. Terraform Plan
+    # 6. Terraform Plan
     - name: Terraform Plan
       run: terraform plan -input=false
       working-directory: terraform/
 
-    # 9. Terraform Apply
+    # 7. Terraform Apply
     - name: Terraform Apply
       run: terraform apply -input=false -auto-approve
       working-directory: terraform/
