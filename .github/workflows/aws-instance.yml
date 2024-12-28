@@ -1,0 +1,36 @@
+name: Deploy AWS Instances
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout kode repositori
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # 2. Setup Terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.0
+
+    # 3. Inisialisasi Terraform
+    - name: Terraform Init
+      run: terraform init
+      working-directory: terraform/
+
+    # 4. Terraform Plan
+    - name: Terraform Plan
+      run: terraform plan
+      working-directory: terraform/
+
+    # 5. Terraform Apply
+    - name: Terraform Apply
+      run: terraform apply -auto-approve
+      working-directory: terraform/
