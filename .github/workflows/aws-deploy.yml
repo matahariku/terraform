@@ -1,4 +1,4 @@
-name: Deploy AWS Instances MongoDB & Grafana
+name: Deploy AWS Instances 
 
 on:
   push:
