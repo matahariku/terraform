@@ -53,6 +53,7 @@ jobs:
         echo "TF_VAR_public_subnet_cidr=10.0.1.0/24" >> $GITHUB_ENV
         echo "TF_VAR_private_subnet_cidr=10.0.2.0/24" >> $GITHUB_ENV
 
+
     # 5. Debug Environment Variables
     - name: Debug Environment Variables
       run: |
