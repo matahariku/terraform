@@ -32,3 +32,23 @@ output "sg_mongodb_id" {
   value       = aws_security_group.sg_mongodb.id
   description = "ID of the MongoDB Security Group"
 }
+
+output "grafana_instance_id" {
+  description = "ID instance Grafana"
+  value       = aws_instance.grafana.id
+}
+
+output "mongodb_instance_id" {
+  description = "ID instance MongoDB"
+  value       = aws_instance.mongodb.id
+}
+
+output "grafana_public_ip" {
+  description = "Alamat IP publik instance Grafana"
+  value       = aws_instance.grafana.public_ip
+}
+
+output "mongodb_public_ip" {
+  description = "Alamat IP publik instance MongoDB"
+  value       = aws_instance.mongodb.public_ip
+}
