@@ -131,7 +131,7 @@ resource "aws_instance" "grafana" {
   security_groups = [aws_security_group.sg_grafana.id]
 
   tags = {
-    Name = "grafana-ec2"
+    Name = "gfa"
   }
 }
 
@@ -144,7 +144,7 @@ resource "aws_instance" "mongodb" {
   security_groups = [aws_security_group.sg_mongodb.id]
 
   tags = {
-    Name = "mongodb-ec2"
+    Name = "mdb"
   }
 }
 
