@@ -1,10 +1,10 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.region
 }
 
 # 1. VPC
 resource "aws_vpc" "nangka" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
@@ -23,7 +23,7 @@ resource "aws_internet_gateway" "gw_nangka" {
 # 3. Public Subnet
 resource "aws_subnet" "cafe_public" {
   vpc_id                  = aws_vpc.nangka.id
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = var.public_subnet_cidr
   map_public_ip_on_launch = true
   availability_zone       = "us-east-1a"
   tags = {
@@ -34,7 +34,7 @@ resource "aws_subnet" "cafe_public" {
 # 4. Private Subnet
 resource "aws_subnet" "cafe_private" {
   vpc_id            = aws_vpc.nangka.id
-  cidr_block        = "10.0.2.0/24"
+  cidr_block        = var.private_subnet_cidr
   availability_zone = "us-east-1a"
   tags = {
     Name = "cafe-privat"
@@ -62,7 +62,6 @@ resource "aws_route_table_association" "public_association" {
 }
 
 # 7. Security Groups
-
 # Security Group for Grafana
 resource "aws_security_group" "sg_grafana" {
   vpc_id = aws_vpc.nangka.id
@@ -97,11 +96,20 @@ resource "aws_security_group" "sg_grafana" {
 resource "aws_security_group" "sg_mongodb" {
   vpc_id = aws_vpc.nangka.id
 
+  # Allow MongoDB access within VPC
   ingress {
     from_port   = 27017
     to_port     = 27017
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]  # Hanya akses internal dalam VPC
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  # Allow SSH access to MongoDB
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]  # Ganti dengan IP publik Anda jika perlu
   }
 
   egress {
@@ -113,5 +121,31 @@ resource "aws_security_group" "sg_mongodb" {
 
   tags = {
     Name = "SG-mongodb"
+  }
+}
+
+# 8. Instances
+resource "aws_instance" "grafana" {
+  ami           = var.grafana_ami
+  instance_type = var.instance_type
+  key_name      = var.key_name
+  subnet_id     = aws_subnet.cafe_public.id
+  security_groups = [aws_security_group.sg_grafana.id]
+
+  tags = {
+    Name = "Grafana"
+  }
+}
+
+resource "aws_instance" "mongodb" {
+  ami           = var.mongodb_ami
+  instance_type = var.instance_type
+  key_name      = var.key_name
+  subnet_id     = aws_subnet.cafe_public.id  # MongoDB di subnet publik untuk SSH
+  associate_public_ip_address = true
+  security_groups = [aws_security_group.sg_mongodb.id]
+
+  tags = {
+    Name = "MongoDB"
   }
 }
