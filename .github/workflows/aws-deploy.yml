@@ -14,29 +14,35 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # 2. Setup Terraform
+    # 2. Set Up Key Pair
+    - name: Set Up Key Pair
+      run: |
+        echo "${{ secrets.AWS_KEY_PAIR }}" > key_cafe.pem
+        chmod 400 key_cafe.pem
+
+    # 3. Setup Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: 1.5.0
 
-    # 3. Set Environment Variables
+    # 4. Set Environment Variables
     - name: Set Environment Variables
       run: |
-        echo "TF_VAR_key_name=${{ secrets.KEY_CAFE }}" >> $GITHUB_ENV
+        echo "TF_VAR_key_name=key_cafe" >> $GITHUB_ENV
         echo "TF_VAR_region=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV
 
-    # 4. Terraform Init
+    # 5. Terraform Init
     - name: Terraform Init
       run: terraform init
       working-directory: terraform/
 
-    # 5. Terraform Plan
+    # 6. Terraform Plan
     - name: Terraform Plan
       run: terraform plan
       working-directory: terraform/
 
-    # 6. Terraform Apply
+    # 7. Terraform Apply
     - name: Terraform Apply
       run: terraform apply -auto-approve
       working-directory: terraform/
