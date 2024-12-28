@@ -1,34 +1,34 @@
-output "grafana_instance_id" {
-  description = "ID instance Grafana"
-  value       = aws_instance.grafana.id
-}
-
-output "mongodb_instance_id" {
-  description = "ID instance MongoDB"
-  value       = aws_instance.mongodb.id
-}
-
-output "grafana_public_ip" {
-  description = "Alamat IP publik instance Grafana"
-  value       = aws_instance.grafana.public_ip
-}
-
-output "mongodb_private_ip" {
-  description = "Alamat IP privat instance MongoDB"
-  value       = aws_instance.mongodb.private_ip
-}
-
 output "vpc_id" {
-  description = "ID VPC yang dibuat"
-  value       = aws_vpc.main.id
+  value       = aws_vpc.nangka.id
+  description = "ID of the VPC"
 }
 
 output "public_subnet_id" {
-  description = "ID subnet publik"
-  value       = aws_subnet.public.id
+  value       = aws_subnet.cafe_public.id
+  description = "ID of the public subnet"
 }
 
 output "private_subnet_id" {
-  description = "ID subnet privat"
-  value       = aws_subnet.private.id
+  value       = aws_subnet.cafe_private.id
+  description = "ID of the private subnet"
+}
+
+output "internet_gateway_id" {
+  value       = aws_internet_gateway.gw_nangka.id
+  description = "ID of the Internet Gateway"
+}
+
+output "route_table_id" {
+  value       = aws_route_table.route_private.id
+  description = "ID of the route table"
+}
+
+output "sg_grafana_id" {
+  value       = aws_security_group.sg_grafana.id
+  description = "ID of the Grafana Security Group"
+}
+
+output "sg_mongodb_id" {
+  value       = aws_security_group.sg_mongodb.id
+  description = "ID of the MongoDB Security Group"
 }
