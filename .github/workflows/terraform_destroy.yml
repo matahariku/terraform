@@ -1,18 +1,16 @@
 name: Destroy AWS Resources
 
 on:
-  workflow_dispatch:  # Memungkinkan eksekusi manual
+  workflow_dispatch:
 
 jobs:
   destroy:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout repository
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # 2. Configure AWS Credentials
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v3
       with:
@@ -21,18 +19,11 @@ jobs:
         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    # 3. Setup Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: 1.5.0
 
-    # 4. Terraform Init
-    - name: Terraform Init
-      run: terraform init -input=false
-      working-directory: terraform/
-
-    # 5. Terraform Destroy
     - name: Terraform Destroy
       run: terraform destroy -input=false -auto-approve \
         -var "key_name=${{ secrets.KEY_CAFE }}" \
