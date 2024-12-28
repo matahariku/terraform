@@ -2,10 +2,7 @@ variable "region" {
   description = "Region AWS untuk deployment"
   type        = string
   default     = "us-east-1"
-  validation {
-    condition     = can(regex("^[a-z]+-[a-z]+-[0-9]+$", var.region))
-    error_message = "Region harus dalam format valid, misal: us-east-1"
-  }
+}
 
 variable "vpc_cidr" {
   description = "CIDR block untuk VPC"
@@ -45,6 +42,3 @@ variable "key_name" {
   description = "Key pair untuk akses SSH"
   type        = string
 }
-
-
-
