@@ -37,7 +37,7 @@ resource "aws_subnet" "cafe_private" {
   cidr_block        = var.private_subnet_cidr
   availability_zone = "us-east-1a"
   tags = {
-    Name = "cafe-privat"
+    Name = "cafe-private"
   }
 }
 
@@ -51,7 +51,7 @@ resource "aws_route_table" "route_private" {
   }
 
   tags = {
-    Name = "route-privat"
+    Name = "route-private"
   }
 }
 
@@ -62,7 +62,7 @@ resource "aws_route_table_association" "public_association" {
 }
 
 # 7. Security Groups
-# Security Group for Grafana
+## Security Group for Grafana
 resource "aws_security_group" "sg_grafana" {
   vpc_id = aws_vpc.nangka.id
 
@@ -92,11 +92,10 @@ resource "aws_security_group" "sg_grafana" {
   }
 }
 
-# Security Group for MongoDB
+## Security Group for MongoDB
 resource "aws_security_group" "sg_mongodb" {
   vpc_id = aws_vpc.nangka.id
 
-  # Allow MongoDB access within VPC
   ingress {
     from_port   = 27017
     to_port     = 27017
@@ -104,12 +103,11 @@ resource "aws_security_group" "sg_mongodb" {
     cidr_blocks = ["10.0.0.0/16"]
   }
 
-  # Allow SSH access to MongoDB
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # Akses global (ganti dengan IP Anda jika perlu)
+    cidr_blocks = ["0.0.0.0/0"]  # Ubah ini menjadi IP Anda untuk keamanan lebih
   }
 
   egress {
@@ -125,6 +123,7 @@ resource "aws_security_group" "sg_mongodb" {
 }
 
 # 8. Instances
+## Grafana Instance
 resource "aws_instance" "grafana" {
   ami           = var.grafana_ami
   instance_type = var.instance_type
@@ -133,19 +132,20 @@ resource "aws_instance" "grafana" {
   security_groups = [aws_security_group.sg_grafana.id]
 
   tags = {
-    Name = "grafana"  
+    Name = "grafana"
   }
 }
 
+## MongoDB Instance
 resource "aws_instance" "mongodb" {
   ami           = var.mongodb_ami
   instance_type = var.instance_type
   key_name      = var.key_name
-  subnet_id     = aws_subnet.cafe_public.id
-  associate_public_ip_address = true
+  subnet_id     = aws_subnet.cafe_private.id
+  associate_public_ip_address = false
   security_groups = [aws_security_group.sg_mongodb.id]
 
   tags = {
-    Name = "mongodb"  
+    Name = "mongodb"
   }
 }
