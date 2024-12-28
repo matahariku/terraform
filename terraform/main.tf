@@ -123,7 +123,7 @@ resource "aws_security_group" "sg_mongodb" {
 }
 
 # 8. Instances
-resource "aws_instance" "grafana" {
+resource "aws_instance" "gfa" {
   ami           = var.grafana_ami
   instance_type = var.instance_type
   key_name      = var.key_name
@@ -135,7 +135,7 @@ resource "aws_instance" "grafana" {
   }
 }
 
-resource "aws_instance" "mongodb" {
+resource "aws_instance" "mdb" {
   ami           = var.mongodb_ami
   instance_type = var.instance_type
   key_name      = var.key_name
