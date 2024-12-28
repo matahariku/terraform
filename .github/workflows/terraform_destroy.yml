@@ -1,16 +1,18 @@
 name: Destroy AWS Resources
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Memungkinkan eksekusi manual dari GitHub UI
 
 jobs:
   destroy:
     runs-on: ubuntu-latest
 
     steps:
+    # 1. Checkout repository
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    # 2. Configure AWS Credentials
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v3
       with:
@@ -19,24 +21,26 @@ jobs:
         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
         aws-region: ${{ secrets.AWS_REGION }}
 
+    # 3. Setup Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: 1.5.0
 
+    # 4. Terraform Init
     - name: Terraform Init
       run: terraform init -input=false
       working-directory: terraform/
 
+    # 5. Terraform Destroy
     - name: Terraform Destroy
-      run: |
-        terraform destroy -input=false -auto-approve \
-          -var "key_name=${{ secrets.KEY_CAFE }}" \
-          -var "region=${{ secrets.AWS_REGION }}" \
-          -var "grafana_ami=${{ secrets.GRAFANA_AMI }}" \
-          -var "mongodb_ami=${{ secrets.MONGODB_AMI }}" \
-          -var "instance_type=t2.micro" \
-          -var "vpc_cidr=10.0.0.0/16" \
-          -var "public_subnet_cidr=10.0.1.0/24" \
-          -var "private_subnet_cidr=10.0.2.0/24"
+      run: terraform destroy -input=false -auto-approve \
+        -var "key_name=${{ secrets.KEY_CAFE }}" \
+        -var "region=${{ secrets.AWS_REGION }}" \
+        -var "grafana_ami=${{ secrets.GRAFANA_AMI }}" \
+        -var "mongodb_ami=${{ secrets.MONGODB_AMI }}" \
+        -var "instance_type=t2.micro" \
+        -var "vpc_cidr=10.0.0.0/16" \
+        -var "public_subnet_cidr=10.0.1.0/24" \
+        -var "private_subnet_cidr=10.0.2.0/24"
       working-directory: terraform/
