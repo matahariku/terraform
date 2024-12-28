@@ -10,43 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout kode repository
+    # Step 1: Checkout repository
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # 2. Install AWS CLI
-    - name: Install AWS CLI
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y awscli
-
-    # 3. Konfigurasi AWS CLI menggunakan secrets
-    - name: Configure AWS CLI
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: |
-        aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-        aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-        aws configure set region us-east-1
-
-    # 4. Setup Terraform
+    # Step 2: Set up Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: 1.5.0
 
-    # 5. Inisialisasi Terraform
+    # Step 3: Terraform Init
     - name: Terraform Init
       run: terraform init
       working-directory: terraform/
 
-    # 6. Terraform Plan
+    # Step 4: Terraform Plan
     - name: Terraform Plan
-      run: terraform plan
+      run: terraform plan -var "grafana_ami=${{ secrets.GRAFANA_AMI }}" \
+                           -var "mongodb_ami=${{ secrets.MONGODB_AMI }}" \
+                           -var "key_name=${{ secrets.AWS_KEY_NAME }}"
       working-directory: terraform/
 
-    # 7. Terraform Apply
+    # Step 5: Terraform Apply
     - name: Terraform Apply
-      run: terraform apply -auto-approve
+      run: terraform apply -auto-approve -var "grafana_ami=${{ secrets.GRAFANA_AMI }}" \
+                                            -var "mongodb_ami=${{ secrets.MONGODB_AMI }}" \
+                                            -var "key_name=${{ secrets.AWS_KEY_NAME }}"
       working-directory: terraform/
