@@ -1,4 +1,4 @@
-name: Deploy AWS Instances mongodb & grafana
+name: Deploy AWS Instances MongoDB & Grafana
 
 on:
   push:
@@ -16,10 +16,11 @@ jobs:
 
     # 2. Configure AWS Credentials
     - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v2
+      uses: aws-actions/configure-aws-credentials@v3
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }} # Tambahkan jika menggunakan token sementara
         aws-region: ${{ secrets.AWS_REGION }}
 
     # 3. Setup Terraform
@@ -31,7 +32,7 @@ jobs:
     # 4. Set Environment Variables
     - name: Set Environment Variables
       run: |
-        echo "TF_VAR_key_name=${{ secrets.AWS_KEY_PAIR }}" >> $GITHUB_ENV
+        echo "TF_VAR_key_name=${{ secrets.KEY_CAFE }}" >> $GITHUB_ENV
         echo "TF_VAR_region=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV
         echo "TF_VAR_grafana_ami=${{ secrets.GRAFANA_AMI }}" >> $GITHUB_ENV
         echo "TF_VAR_mongodb_ami=${{ secrets.MONGODB_AMI }}" >> $GITHUB_ENV
@@ -40,17 +41,25 @@ jobs:
         echo "TF_VAR_public_subnet_cidr=10.0.1.0/24" >> $GITHUB_ENV
         echo "TF_VAR_private_subnet_cidr=10.0.2.0/24" >> $GITHUB_ENV
 
-    # 5. Terraform Init
+    # 5. Debug Environment Variables
+    - name: Debug Environment Variables
+      run: |
+        echo "TF_VAR_key_name=$TF_VAR_key_name"
+        echo "TF_VAR_region=$TF_VAR_region"
+        echo "TF_VAR_grafana_ami=$TF_VAR_grafana_ami"
+        echo "TF_VAR_mongodb_ami=$TF_VAR_mongodb_ami"
+
+    # 6. Terraform Init
     - name: Terraform Init
       run: terraform init -input=false
       working-directory: terraform/
 
-    # 6. Terraform Plan
+    # 7. Terraform Plan
     - name: Terraform Plan
       run: terraform plan -input=false
       working-directory: terraform/
 
-    # 7. Terraform Apply
+    # 8. Terraform Apply
     - name: Terraform Apply
       run: terraform apply -input=false -auto-approve
       working-directory: terraform/
