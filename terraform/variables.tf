@@ -43,7 +43,7 @@ variable "instance_type" {
 variable "key_name" {
   description = "Name of the key pair for SSH access"
   type        = string
-  default     = "valid-key-name"  
+  default     = "KEY_CAFE"  
 }
 
 
