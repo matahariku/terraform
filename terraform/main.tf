@@ -131,7 +131,7 @@ resource "aws_instance" "grafana" {
   security_groups = [aws_security_group.sg_grafana.id]
 
   tags = {
-    Name = "grafana"  
+    Name = "instance-grafana"
   }
 }
 
@@ -139,12 +139,13 @@ resource "aws_instance" "mongodb" {
   ami           = var.mongodb_ami
   instance_type = var.instance_type
   key_name      = var.key_name
-  subnet_id     = aws_subnet.cafe_public.id
-  associate_public_ip_address = true
+  subnet_id     = aws_subnet.cafe_private.id  # Menggunakan subnet private untuk keamanan
+  associate_public_ip_address = false         # Nonaktifkan public IP
   security_groups = [aws_security_group.sg_mongodb.id]
 
   tags = {
-    Name = "mongodb"  
+    Name = "instance-mongodb"
   }
 }
+
 
