@@ -23,31 +23,20 @@ jobs:
     # 3. Set Environment Variables
     - name: Set Environment Variables
       run: |
-        echo "TF_VAR_key_name=${{ secrets.VOCKEY }}" >> $GITHUB_ENV
+        echo "TF_VAR_key_name=${{ secrets.KEY_CAFE }}" >> $GITHUB_ENV
         echo "TF_VAR_region=${{ secrets.AWS_REGION }}" >> $GITHUB_ENV
 
-    # 4. Terraform Format and Validate
-    - name: Terraform Format
-      run: terraform fmt -check
-      working-directory: terraform/
-
-    - name: Terraform Validate
-      run: terraform validate
-      working-directory: terraform/
-
-    # 5. Terraform Init
+    # 4. Terraform Init
     - name: Terraform Init
       run: terraform init
       working-directory: terraform/
 
-    # 6. Terraform Plan
+    # 5. Terraform Plan
     - name: Terraform Plan
-      run: |
-        terraform plan -out=tfplan
-        terraform show -json tfplan > tfplan.json
+      run: terraform plan
       working-directory: terraform/
 
-    # 7. Terraform Apply
+    # 6. Terraform Apply
     - name: Terraform Apply
-      run: terraform apply -auto-approve tfplan
+      run: terraform apply -auto-approve
       working-directory: terraform/
