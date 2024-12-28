@@ -1,7 +1,7 @@
 variable "region" {
   description = "AWS region where resources will be deployed"
   type        = string
-  default     = "us-east-1"  
+  default     = "us-east-1"
 }
 
 variable "vpc_cidr" {
@@ -25,7 +25,7 @@ variable "private_subnet_cidr" {
 variable "grafana_ami" {
   description = "AMI ID for the Grafana instance"
   type        = string
-  default     = "ami-0e2c8caa4b6378d8c" 
+  default     = "ami-0e2c8caa4b6378d8c"
 }
 
 variable "mongodb_ami" {
@@ -35,16 +35,13 @@ variable "mongodb_ami" {
 }
 
 variable "instance_type" {
-  description = "Tipe instance AWS"
+  description = "Instance type for AWS EC2 instances"
   type        = string
   default     = "t2.micro"
 }
 
 variable "key_name" {
-  description = "Name of the key pair for SSH access"
+  description = "Name of the SSH key pair"
   type        = string
-  default     = "KEY_CAFE"  
+  default     = "KEY_CAFE"
 }
-
-
-
