@@ -24,14 +24,19 @@ jobs:
       with:
         terraform_version: 1.5.0
 
+    - name: Terraform Init
+      run: terraform init -input=false
+      working-directory: terraform/
+
     - name: Terraform Destroy
-      run: terraform destroy -input=false -auto-approve \
-        -var "key_name=${{ secrets.KEY_CAFE }}" \
-        -var "region=${{ secrets.AWS_REGION }}" \
-        -var "grafana_ami=${{ secrets.GRAFANA_AMI }}" \
-        -var "mongodb_ami=${{ secrets.MONGODB_AMI }}" \
-        -var "instance_type=t2.micro" \
-        -var "vpc_cidr=10.0.0.0/16" \
-        -var "public_subnet_cidr=10.0.1.0/24" \
-        -var "private_subnet_cidr=10.0.2.0/24"
+      run: |
+        terraform destroy -input=false -auto-approve \
+          -var "key_name=${{ secrets.KEY_CAFE }}" \
+          -var "region=${{ secrets.AWS_REGION }}" \
+          -var "grafana_ami=${{ secrets.GRAFANA_AMI }}" \
+          -var "mongodb_ami=${{ secrets.MONGODB_AMI }}" \
+          -var "instance_type=t2.micro" \
+          -var "vpc_cidr=10.0.0.0/16" \
+          -var "public_subnet_cidr=10.0.1.0/24" \
+          -var "private_subnet_cidr=10.0.2.0/24"
       working-directory: terraform/
