@@ -1,7 +1,7 @@
 name: Destroy AWS Resources
 
 on:
-  workflow_dispatch:  # Trigger manual
+  workflow_dispatch:  # Memungkinkan eksekusi manual
 
 jobs:
   destroy:
