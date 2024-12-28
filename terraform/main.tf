@@ -42,20 +42,7 @@ resource "aws_subnet" "cafe_private" {
   }
 }
 
-# 5. Route Table untuk Subnet Privat
-resource "aws_route_table" "route_private" {
-  vpc_id = aws_vpc.nangka_vpc.id
-  tags = {
-    Name = "route-privat"
-  }
-}
-
-resource "aws_route_table_association" "private_association" {
-  subnet_id      = aws_subnet.cafe_private.id
-  route_table_id = aws_route_table.route_private.id
-}
-
-# 6. Route Table untuk Subnet Publik
+# 5. Route Table untuk Subnet Publik
 resource "aws_route_table" "route_public" {
   vpc_id = aws_vpc.nangka_vpc.id
   tags = {
@@ -74,7 +61,7 @@ resource "aws_route_table_association" "public_association" {
   route_table_id = aws_route_table.route_public.id
 }
 
-# 7. Security Group untuk Grafana
+# 6. Security Group untuk Grafana
 resource "aws_security_group" "sg_grafana" {
   name        = "SG-grafana"
   vpc_id      = aws_vpc.nangka_vpc.id
@@ -99,7 +86,7 @@ resource "aws_security_group" "sg_grafana" {
   }
 }
 
-# 8. Security Group untuk MongoDB
+# 7. Security Group untuk MongoDB
 resource "aws_security_group" "sg_mongodb" {
   name        = "SG-mongodb"
   vpc_id      = aws_vpc.nangka_vpc.id
@@ -116,34 +103,4 @@ resource "aws_security_group" "sg_mongodb" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "SG-mongodb"
-  }
-}
-
-# 9. Instance untuk Grafana
-resource "aws_instance" "grafana" {
-  ami           = var.grafana_ami
-  instance_type = var.instance_type
-  subnet_id     = aws_subnet.cafe_public.id
-  security_groups = [aws_security_group.sg_grafana.id]
-
-  tags = {
-    Name = "grafana-instance"
-  }
-}
-
-# 10. Instance untuk MongoDB
-resource "aws_instance" "mongodb" {
-  ami           = var.mongodb_ami
-  instance_type = var.instance_type
-  subnet_id     = aws_subnet.cafe_private.id
-  security_groups = [aws_security_group.sg_mongodb.id]
-
-  tags = {
-    Name = "mongodb-instance"
-  }
-}
+    cidr_blocks = ["
