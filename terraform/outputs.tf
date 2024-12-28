@@ -44,11 +44,11 @@ output "mongodb_instance_id" {
 }
 
 output "grafana_public_ip" {
-  description = "Alamat IP publik instance Grafana"
+  description = "Public IP address of the Grafana instance"
   value       = aws_instance.grafana.public_ip
 }
 
 output "mongodb_public_ip" {
-  description = "Alamat IP publik instance MongoDB"
+  description = "Public IP address of the MongoDB instance"
   value       = aws_instance.mongodb.public_ip
 }
