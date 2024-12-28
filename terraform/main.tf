@@ -123,7 +123,6 @@ resource "aws_security_group" "sg_mongodb" {
 }
 
 # 8. Instances
-## Grafana Instance
 resource "aws_instance" "grafana" {
   ami           = var.grafana_ami
   instance_type = var.instance_type
@@ -132,20 +131,20 @@ resource "aws_instance" "grafana" {
   security_groups = [aws_security_group.sg_grafana.id]
 
   tags = {
-    Name = "grafana"
+    Name = "grafana"  
   }
 }
 
-## MongoDB Instance
 resource "aws_instance" "mongodb" {
   ami           = var.mongodb_ami
   instance_type = var.instance_type
   key_name      = var.key_name
-  subnet_id     = aws_subnet.cafe_private.id
-  associate_public_ip_address = false
+  subnet_id     = aws_subnet.cafe_public.id
+  associate_public_ip_address = true
   security_groups = [aws_security_group.sg_mongodb.id]
 
   tags = {
-    Name = "mongodb"
+    Name = "mongodb"  
   }
 }
+
