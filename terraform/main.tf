@@ -146,6 +146,6 @@ resource "aws_instance" "mongodb" {
   security_groups = [aws_security_group.sg_mongodb.id]
 
   tags = {
-    Name = "mongoDB-instance"
+    Name = "mongoDB-instance" 
   }
 }
