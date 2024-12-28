@@ -19,15 +19,11 @@ variable "private_subnet_cidr" {
 }
 
 variable "grafana_ami" {
-  description = "AMI ID untuk instance Grafana"
-  type        = string
-  default     = "ami-0e2c8caa4b6378d8c" 
+  default = "ami-0e2c8caa4b6378d8c"
 }
 
 variable "mongodb_ami" {
-  description = "AMI ID untuk instance MongoDB"
-  type        = string
-  default     = "ami-01816d07b1128cd2d"  
+  default = "ami-01816d07b1128cd2d"
 }
 
 variable "instance_type" {
@@ -36,8 +32,5 @@ variable "instance_type" {
 }
 
 variable "key_name" {
-  description = "Key pair untuk akses SSH"
+  default = "valid-key-name"
 }
-
-
-
