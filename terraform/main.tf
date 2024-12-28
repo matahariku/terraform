@@ -123,3 +123,27 @@ resource "aws_security_group" "sg_mongodb" {
     Name = "SG-mongodb"
   }
 }
+
+# 9. Instance untuk Grafana
+resource "aws_instance" "grafana" {
+  ami           = var.grafana_ami
+  instance_type = var.instance_type
+  subnet_id     = aws_subnet.cafe_public.id
+  security_groups = [aws_security_group.sg_grafana.id]
+
+  tags = {
+    Name = "grafana-instance"
+  }
+}
+
+# 10. Instance untuk MongoDB
+resource "aws_instance" "mongodb" {
+  ami           = var.mongodb_ami
+  instance_type = var.instance_type
+  subnet_id     = aws_subnet.cafe_private.id
+  security_groups = [aws_security_group.sg_mongodb.id]
+
+  tags = {
+    Name = "mongodb-instance"
+  }
+}
