@@ -1,5 +1,4 @@
-name: Deploy AWS Instances mongodb & grafana
-
+name: Deploy AWS Instances
 
 on:
   push:
@@ -15,19 +14,28 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # 2. Set Up Key Pair
+    # 2. Configure AWS Credentials
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    # 3. Set Up Key Pair
     - name: Set Up Key Pair
       run: |
         echo "${{ secrets.AWS_KEY_PAIR }}" > key_cafe.pem
         chmod 400 key_cafe.pem
 
-    # 3. Setup Terraform
+    # 4. Setup Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: 1.5.0
 
-    # 4. Set Environment Variables
+    # 5. Set Environment Variables
     - name: Set Environment Variables
       run: |
         echo "TF_VAR_key_name=key_cafe" >> $GITHUB_ENV
@@ -38,14 +46,6 @@ jobs:
         echo "TF_VAR_vpc_cidr=10.0.0.0/16" >> $GITHUB_ENV
         echo "TF_VAR_public_subnet_cidr=10.0.1.0/24" >> $GITHUB_ENV
         echo "TF_VAR_private_subnet_cidr=10.0.2.0/24" >> $GITHUB_ENV
-
-    # 5. Debug Variables (Opsional)
-    - name: Debug Environment Variables
-      run: |
-        echo "TF_VAR_key_name=$TF_VAR_key_name"
-        echo "TF_VAR_region=$TF_VAR_region"
-        echo "TF_VAR_grafana_ami=$TF_VAR_grafana_ami"
-        echo "TF_VAR_mongodb_ami=$TF_VAR_mongodb_ami"
 
     # 6. Terraform Init
     - name: Terraform Init
