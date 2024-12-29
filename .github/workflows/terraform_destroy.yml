@@ -1,10 +1,10 @@
-name: Destroy AWS Infrastructure
+name: Destroy AWS Infrastructure with State Cleanup
 
 on:
-  workflow_dispatch: # Memungkinkan eksekusi manual
+  workflow_dispatch: # Memungkinkan eksekusi manual dari GitHub UI
 
 jobs:
-  destroy-aws:
+  destroy_aws:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,17 +18,29 @@ jobs:
         with:
           terraform_version: 1.5.6
 
-      # 3. Set Environment Variables
-      - name: Set Environment Variables
-        run: echo "TF_VAR_key_name=${{ secrets.VOCKEY }}" >> $GITHUB_ENV
+      # 3. Terraform Init
+      - name: Initialize Terraform
+        run: terraform init -reconfigure
+        working-directory: terraform/aws
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
 
-      # 4. Terraform Init
-      - name: Terraform Init
-        run: terraform init -chdir=terraform/aws
+      # 4. List Terraform State Resources
+      - name: List Terraform State Resources
+        run: terraform state list
+        working-directory: terraform/aws
 
-      # 5. Terraform Destroy
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve -chdir=terraform/aws
+      # 5. Remove VPC Resource from Terraform State (if needed)
+      - name: Remove VPC from Terraform State
+        run: terraform state rm aws_vpc.nangka || echo "Resource not found, skipping."
+        working-directory: terraform/aws
+
+      # 6. Terraform Destroy
+      - name: Destroy Terraform Resources
+        run: terraform destroy -auto-approve
+        working-directory: terraform/aws
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
