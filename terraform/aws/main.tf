@@ -1,10 +1,10 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.region
 }
 
 # VPC
 resource "aws_vpc" "nangka" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
@@ -12,10 +12,10 @@ resource "aws_vpc" "nangka" {
   }
 }
 
-# Subnet Public
+# Public Subnet
 resource "aws_subnet" "cafe_public" {
   vpc_id                  = aws_vpc.nangka.id
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = var.subnet_public_cidr
   map_public_ip_on_launch = true
   availability_zone       = "us-east-1a"
   tags = {
@@ -23,10 +23,10 @@ resource "aws_subnet" "cafe_public" {
   }
 }
 
-# Subnet Private
+# Private Subnet
 resource "aws_subnet" "cafe_private" {
   vpc_id            = aws_vpc.nangka.id
-  cidr_block        = "10.0.2.0/24"
+  cidr_block        = var.subnet_private_cidr
   availability_zone = "us-east-1a"
   tags = {
     Name = "cafe-private"
@@ -72,7 +72,7 @@ resource "aws_security_group" "sg_mongodb" {
     from_port   = 27017
     to_port     = 27017
     protocol    = "tcp"
-    cidr_blocks = ["10.0.1.0/24"]
+    cidr_blocks = [var.subnet_public_cidr]
   }
 
   egress {
@@ -117,7 +117,7 @@ resource "aws_instance" "mongodb" {
   instance_type = "t3.micro"
   subnet_id     = aws_subnet.cafe_private.id
   security_groups = [aws_security_group.sg_mongodb.name]
-  key_name      = "KEY_CAFE" # Menggunakan key pair KEY_CAFE
+  key_name      = var.key_pair_name
 
   tags = {
     Name = "MongoDBInstance"
@@ -130,14 +130,10 @@ resource "aws_instance" "grafana" {
   instance_type = "t3.micro"
   subnet_id     = aws_subnet.cafe_public.id
   security_groups = [aws_security_group.sg_grafana.name]
-  key_name      = "KEY_CAFE" # Menggunakan key pair KEY_CAFE
+  key_name      = var.key_pair_name
 
   tags = {
     Name = "GrafanaInstance"
   }
 }
 
-# Output Public IP Grafana
-output "grafana_public_ip" {
-  value = aws_instance.grafana.public_ip
-}
