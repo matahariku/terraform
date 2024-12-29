@@ -22,3 +22,12 @@ output "grafana_instance_ip" {
   description = "The public IP address of the Grafana instance"
   value       = aws_instance.grafana.public_ip
 }
+output "mongodb_public_ip" {
+  description = "The public IP address of the MongoDB instance"
+  value       = aws_instance.mongodb.public_ip
+}
+
+output "grafana_public_ip" {
+  description = "The public IP address of the Grafana instance"
+  value       = aws_instance.grafana.public_ip
+}
