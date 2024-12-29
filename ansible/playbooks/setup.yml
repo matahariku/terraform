@@ -1,0 +1,10 @@
+---
+- name: Configure MongoDB
+  hosts: mongodb
+  roles:
+    - mongodb
+
+- name: Configure Grafana
+  hosts: grafana
+  roles:
+    - grafana
