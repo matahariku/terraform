@@ -1,36 +1,35 @@
-name: Destroy AWS Resources
+name: Destroy AWS Infrastructure
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Memungkinkan eksekusi manual
 
 jobs:
-  destroy:
+  destroy-aws:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      # 2. Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.5.6
 
-      - name: Terraform Init
-        run: terraform init -input=false -chdir=terraform/aws
+      # 3. Set Environment Variables
+      - name: Set Environment Variables
+        run: echo "TF_VAR_key_name=${{ secrets.VOCKEY }}" >> $GITHUB_ENV
 
+      # 4. Terraform Init
+      - name: Terraform Init
+        run: terraform init -chdir=terraform/aws
+
+      # 5. Terraform Destroy
       - name: Terraform Destroy
-        run: |
-          terraform destroy -input=false -auto-approve \
-            -var "key_name=${{ secrets.KEY_CAFE }}" \
-            -var "region=${{ secrets.AWS_REGION }}" \
-            -var "grafana_ami=${{ secrets.GRAFANA_AMI }}" \
-            -var "mongodb_ami=${{ secrets.MONGODB_AMI }}" \
-            -var "instance_type=t2.micro" \
-            -var "vpc_cidr=10.0.0.0/16" \
-            -var "public_subnet_cidr=10.0.1.0/24" \
-            -var "private_subnet_cidr=10.0.2.0/24"
+        run: terraform destroy -auto-approve -chdir=terraform/aws
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: us-east-1
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
