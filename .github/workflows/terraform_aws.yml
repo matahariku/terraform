@@ -1,4 +1,4 @@
-name: Deploy AWS Infrastructure
+name: Deploy AWS Infrastructure for 2 instances
 
 on:
   push:
