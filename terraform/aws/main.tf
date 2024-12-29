@@ -1,3 +1,13 @@
+terraform {
+  backend "s3" {
+    bucket         = "deploy-aws-terra" 
+    key            = "terraform/state/aws/terraform.tfstate" 
+    region         = "us-east-1" 
+    dynamodb_table = "terraform-lock-table"
+    encrypt        = true
+  }
+}
+
 provider "aws" {
   region = var.region
 }
@@ -69,7 +79,6 @@ resource "aws_route_table_association" "public_subnet" {
 # Security Group for MongoDB
 resource "aws_security_group" "sg_mongodb" {
   vpc_id = aws_vpc.nangka.id
-  name   = "SG-mongodb"
 
   ingress {
     from_port   = 27017
@@ -101,7 +110,6 @@ resource "aws_security_group" "sg_mongodb" {
 # Security Group for Grafana
 resource "aws_security_group" "sg_grafana" {
   vpc_id = aws_vpc.nangka.id
-  name   = "SG-grafana"
 
   ingress {
     from_port   = 3000
@@ -132,12 +140,11 @@ resource "aws_security_group" "sg_grafana" {
 
 # MongoDB Instance
 resource "aws_instance" "mongodb" {
-  ami                      = "ami-01816d07b1128cd2d"
-  instance_type            = "t3.micro"
-  subnet_id                = aws_subnet.cafe_private.id
-  vpc_security_group_ids   = [aws_security_group.sg_mongodb.id]
-  key_name                 = var.key_pair_name
-  associate_public_ip_address = true
+  ami                    = "ami-01816d07b1128cd2d"
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.cafe_private.id
+  vpc_security_group_ids = [aws_security_group.sg_mongodb.id]
+  key_name               = var.key_pair_name
 
   tags = {
     Name        = "MongoDBInstance"
@@ -147,12 +154,11 @@ resource "aws_instance" "mongodb" {
 
 # Grafana Instance
 resource "aws_instance" "grafana" {
-  ami                      = "ami-0e2c8caa4b6378d8c"
-  instance_type            = "t3.micro"
-  subnet_id                = aws_subnet.cafe_public.id
-  vpc_security_group_ids   = [aws_security_group.sg_grafana.id]
-  key_name                 = var.key_pair_name
-  associate_public_ip_address = true
+  ami                    = "ami-0e2c8caa4b6378d8c"
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.cafe_public.id
+  vpc_security_group_ids = [aws_security_group.sg_grafana.id]
+  key_name               = var.key_pair_name
 
   tags = {
     Name        = "GrafanaInstance"
