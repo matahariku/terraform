@@ -8,7 +8,8 @@ resource "aws_vpc" "nangka" {
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
-    Name = "nangka"
+    Name        = "nangka"
+    Environment = "Production"
   }
 }
 
@@ -19,7 +20,8 @@ resource "aws_subnet" "cafe_public" {
   map_public_ip_on_launch = true
   availability_zone       = "us-east-1a"
   tags = {
-    Name = "cafe-public"
+    Name        = "cafe-public"
+    Environment = "Production"
   }
 }
 
@@ -29,7 +31,8 @@ resource "aws_subnet" "cafe_private" {
   cidr_block        = var.subnet_private_cidr
   availability_zone = "us-east-1a"
   tags = {
-    Name = "cafe-private"
+    Name        = "cafe-private"
+    Environment = "Production"
   }
 }
 
@@ -37,7 +40,8 @@ resource "aws_subnet" "cafe_private" {
 resource "aws_internet_gateway" "gw_nangka" {
   vpc_id = aws_vpc.nangka.id
   tags = {
-    Name = "GW-nangka"
+    Name        = "GW-nangka"
+    Environment = "Production"
   }
 }
 
@@ -45,15 +49,14 @@ resource "aws_internet_gateway" "gw_nangka" {
 resource "aws_route_table" "public_routes" {
   vpc_id = aws_vpc.nangka.id
 
-  route = [
-    {
-      cidr_block = "0.0.0.0/0"
-      gateway_id = aws_internet_gateway.gw_nangka.id
-    }
-  ]
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.gw_nangka.id
+  }
 
   tags = {
-    Name = "nangka-public-routes"
+    Name        = "nangka-public-routes"
+    Environment = "Production"
   }
 }
 
@@ -72,7 +75,14 @@ resource "aws_security_group" "sg_mongodb" {
     from_port   = 27017
     to_port     = 27017
     protocol    = "tcp"
-    cidr_blocks = [var.subnet_public_cidr]
+    cidr_blocks = [var.subnet_private_cidr]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["<YOUR_PUBLIC_IP>/32"] # Replace with your IP
   }
 
   egress {
@@ -83,7 +93,8 @@ resource "aws_security_group" "sg_mongodb" {
   }
 
   tags = {
-    Name = "SG-mongodb"
+    Name        = "SG-mongodb"
+    Environment = "Production"
   }
 }
 
@@ -99,6 +110,13 @@ resource "aws_security_group" "sg_grafana" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -107,33 +125,37 @@ resource "aws_security_group" "sg_grafana" {
   }
 
   tags = {
-    Name = "SG-grafana"
+    Name        = "SG-grafana"
+    Environment = "Production"
   }
 }
 
 # MongoDB Instance
 resource "aws_instance" "mongodb" {
-  ami           = "ami-01816d07b1128cd2d"
-  instance_type = "t3.micro"
-  subnet_id     = aws_subnet.cafe_private.id
-  security_groups = [aws_security_group.sg_mongodb.name]
-  key_name      = var.key_pair_name
+  ami                      = "ami-01816d07b1128cd2d"
+  instance_type            = "t3.micro"
+  subnet_id                = aws_subnet.cafe_private.id
+  security_groups          = [aws_security_group.sg_mongodb.name]
+  key_name                 = var.key_pair_name
+  associate_public_ip_address = true
 
   tags = {
-    Name = "MongoDBInstance"
+    Name        = "MongoDBInstance"
+    Environment = "Production"
   }
 }
 
 # Grafana Instance
 resource "aws_instance" "grafana" {
-  ami           = "ami-0e2c8caa4b6378d8c"
-  instance_type = "t3.micro"
-  subnet_id     = aws_subnet.cafe_public.id
-  security_groups = [aws_security_group.sg_grafana.name]
-  key_name      = var.key_pair_name
+  ami                      = "ami-0e2c8caa4b6378d8c"
+  instance_type            = "t3.micro"
+  subnet_id                = aws_subnet.cafe_public.id
+  security_groups          = [aws_security_group.sg_grafana.name]
+  key_name                 = var.key_pair_name
+  associate_public_ip_address = true
 
   tags = {
-    Name = "GrafanaInstance"
+    Name        = "GrafanaInstance"
+    Environment = "Production"
   }
 }
-
