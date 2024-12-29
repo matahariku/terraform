@@ -10,36 +10,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout repository
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    # 2. Setup Terraform
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: 1.5.6
+      # 2. Create SSH Key File
+      - name: Create SSH Key File
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AWS_PRIVATE_KEY }}" > ~/.ssh/key.pem
+          chmod 400 ~/.ssh/key.pem
 
-    # 3. Set Environment Variables
-    - name: Set Environment Variables
-      run: |
-        echo "TF_VAR_key_name=${{ secrets.VOCKEY }}" >> $GITHUB_ENV
+      # 3. Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
 
-    # 4. Debug Environment Variables (Opsional)
-    - name: Debug Environment Variables
-      run: printenv | grep TF_VAR_
+      # 4. Terraform Init
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform/aws
 
-    # 5. Terraform Init
-    - name: Terraform Init
-      run: terraform init
-      working-directory: terraform/aws/
+      # 5. Terraform Plan
+      - name: Terraform Plan
+        run: terraform plan
+        working-directory: terraform/aws
 
-    # 6. Terraform Plan
-    - name: Terraform Plan
-      run: terraform plan
-      working-directory: terraform/aws/
-
-    # 7. Terraform Apply
-    - name: Terraform Apply
-      run: terraform apply -auto-approve
-      working-directory: terraform/aws/
+      # 6. Terraform Apply
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: terraform/aws
