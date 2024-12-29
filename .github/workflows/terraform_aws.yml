@@ -1,4 +1,4 @@
-name: Deploy AWS Infrastructure
+name: Deploy AWS Instances
 
 on:
   push:
@@ -6,23 +6,35 @@ on:
       - main
 
 jobs:
-  deploy_aws:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+    # 1. Checkout repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.5.0
+    # 2. Setup Terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.6
 
-      - name: Terraform Init
-        run: terraform init -chdir=terraform/aws
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    # 3. Set Environment Variables
+    - name: Set Environment Variables
+      run: echo "TF_VAR_key_name=${{ secrets.KEY_CAFE }}" >> $GITHUB_ENV
 
-      - name: Terraform Validate
-        run: terraform validate -chdir=terraform/aws
+    # 4. Terraform Init
+    - name: Terraform Init
+      run: terraform init
+      working-directory: terraform/aws/
+
+    # 5. Terraform Plan
+    - name: Terraform Plan
+      run: terraform plan
+      working-directory: terraform/aws/
+
+    # 6. Terraform Apply
+    - name: Terraform Apply
+      run: terraform apply -auto-approve
+      working-directory: terraform/aws/
