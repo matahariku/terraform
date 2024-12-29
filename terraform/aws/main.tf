@@ -135,11 +135,9 @@ resource "aws_instance" "mongodb" {
   ami                      = "ami-01816d07b1128cd2d"
   instance_type            = "t3.micro"
   subnet_id                = aws_subnet.cafe_private.id
-  security_group_ids       = [aws_security_group.sg_mongodb.id] 
+  vpc_security_group_ids   = [aws_security_group.sg_mongodb.id]
   key_name                 = var.key_pair_name
   associate_public_ip_address = true
-
-  depends_on = [aws_security_group.sg_mongodb] 
 
   tags = {
     Name        = "MongoDBInstance"
@@ -152,15 +150,12 @@ resource "aws_instance" "grafana" {
   ami                      = "ami-0e2c8caa4b6378d8c"
   instance_type            = "t3.micro"
   subnet_id                = aws_subnet.cafe_public.id
-  security_group_ids       = [aws_security_group.sg_grafana.id]
+  vpc_security_group_ids   = [aws_security_group.sg_grafana.id]
   key_name                 = var.key_pair_name
   associate_public_ip_address = true
-
-  depends_on = [aws_security_group.sg_grafana] 
 
   tags = {
     Name        = "GrafanaInstance"
     Environment = "Production"
   }
 }
-
