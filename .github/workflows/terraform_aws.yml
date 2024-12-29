@@ -1,0 +1,27 @@
+name: Deploy AWS Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy_aws:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.6
+
+      - name: Terraform Init and Apply
+        run: |
+          terraform init -chdir=terraform/aws
+          terraform apply -auto-approve -chdir=terraform/aws
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
