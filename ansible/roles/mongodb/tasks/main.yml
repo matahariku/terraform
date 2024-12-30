@@ -1,10 +1,30 @@
-- name: Install MongoDB
+# roles/mongodb/tasks/main.yml
+
+- name: Install Python3 (Amazon Linux)
+  yum:
+    name: python3
+    state: present
+  when: ansible_distribution == "Amazon"
+
+- name: Ensure pip3 is installed (Amazon Linux)
+  command: python3 -m ensurepip --upgrade
+  when: ansible_distribution == "Amazon"
+
+- name: Upgrade pip3 to the latest version (Amazon Linux)
+  pip:
+    name: pip
+    state: latest
+  when: ansible_distribution == "Amazon"
+
+- name: Install MongoDB (Amazon Linux)
   yum:
     name: mongodb-org
     state: present
+  when: ansible_distribution == "Amazon"
 
-- name: Enable and start MongoDB service
+- name: Enable and start MongoDB service (Amazon Linux)
   systemd:
     name: mongod
     state: started
     enabled: true
+  when: ansible_distribution == "Amazon"
