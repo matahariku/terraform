@@ -20,6 +20,11 @@
     dest: /etc/apt/sources.list.d/grafana.list
   when: ansible_distribution == "Ubuntu"
 
+- name: Update trusted GPG keys for Grafana repository (Ubuntu)
+  shell: |
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 963FA27710458545
+  when: ansible_distribution == "Ubuntu"
+
 - name: Update apt repository cache (Ubuntu)
   apt:
     update_cache: yes
