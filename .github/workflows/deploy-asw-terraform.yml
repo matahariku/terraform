@@ -1,9 +1,8 @@
+# Deploy AWS Instances
 name: Deploy AWS Instances
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch: 
 
 jobs:
   terraform_apply:
@@ -28,6 +27,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-east-1
+
+      # Add SSH Key for EC2
+      - name: Add SSH Key for EC2
+        run: |
+          echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
+          chmod 400 ~/.ssh/KEY_BLOC4.pem
 
       # Initialize Terraform
       - name: Initialize Terraform
