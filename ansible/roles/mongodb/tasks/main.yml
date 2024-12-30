@@ -2,23 +2,26 @@
   ansible.builtin.yum:
     name: docker
     state: present
-  when: ansible_facts['distribution'] == "Amazon"
+  when: inventory_hostname in groups['mongodb']
 
 - name: Start Docker Service
   ansible.builtin.service:
     name: docker
     state: started
     enabled: yes
+  when: inventory_hostname in groups['mongodb']
 
 - name: Pull MongoDB Docker Image
   ansible.builtin.docker_image:
     name: "{{ docker_image }}"
     source: pull
+  when: inventory_hostname in groups['mongodb']
 
-- name: Create MongoDB Volume (Optional)
-  ansible.builtin.command:
-    cmd: docker volume create mongodb_data
-  ignore_errors: yes
+- name: Stop Existing MongoDB Container (if any)
+  ansible.builtin.shell: |
+    docker stop mongodb || true
+    docker rm mongodb || true
+  when: inventory_hostname in groups['mongodb']
 
 - name: Run MongoDB Docker Container
   ansible.builtin.docker_container:
@@ -33,4 +36,4 @@
     env:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: devops
-  notify: Restart MongoDB Docker Container
+  when: inventory_hostname in groups['mongodb']

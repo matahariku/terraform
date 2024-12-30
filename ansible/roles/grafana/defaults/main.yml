@@ -1,5 +1,2 @@
-grafana_repo: "https://packages.grafana.com/oss/deb stable main"
-grafana_key: "https://packages.grafana.com/gpg.key"
-grafana_packages:
-  - grafana
-grafana_service: grafana-server
+grafana_version: "8.0.0"
+grafana_repo_url: "https://packages.grafana.com/oss/deb stable main"
