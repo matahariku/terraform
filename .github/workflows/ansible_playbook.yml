@@ -4,41 +4,42 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch: # Permet de déclencher le workflow manuellement
 
 jobs:
   ansible:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout Repository
+      # 1. Récupérer le dépôt
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Configure Git Credentials
-        # Pastikan Ansible dapat mengunduh dependencies dengan benar
+      # 2. Configurer les identifiants Git
+        # Assure qu'Ansible puisse télécharger les dépendances
       - name: Configure Git Credentials
         run: |
           git config --global url."https://matahariku:${{ secrets.TOKEN }}@github.com/".insteadOf "https://github.com/"
       
-      # 3. Add SSH Private Key
-        # Gunakan key dari secrets dengan nama `KEY_CAFE`
+      # 3. Ajouter la clé SSH privée
+        # Utiliser la clé privée provenant du secret nommé `KEY_BLOC4`
       - name: Add SSH Private Key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.KEY_CAFE }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
+          chmod 600 ~/.ssh/KEY_BLOC4.pem
 
-      # 4. Test SSH Connection
-        # Tes koneksi SSH ke instance MongoDB
+      # 4. Tester la connexion SSH
+        # Tester la connexion SSH à l'instance MongoDB
       - name: Test SSH Connection to MongoDB
-        run: ssh -o StrictHostKeyChecking=no ec2-user@<MongoDB_PUBLIC_IP> hostname
+        run: ssh -o StrictHostKeyChecking=no ec2-user@34.230.198.148 hostname
 
-      # 5. Install Ansible Roles
-        # Install semua roles yang diperlukan dari `ansible/requirements.yml`
+      # 5. Installer les rôles Ansible
+        # Installer tous les rôles requis depuis `ansible/requirements.yml`
       - name: Install Roles from requirements.yml
         run: ansible-galaxy install -r ansible/requirements.yml --force
 
-      # 6. Run Ansible Playbook
-        # Jalankan playbook setup.yml dengan inventory yang sudah ada
+      # 6. Exécuter le playbook Ansible
+        # Lancer le playbook setup.yml avec l'inventaire existant
       - name: Run Ansible Playbook
         run: ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml
