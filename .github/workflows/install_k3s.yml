@@ -1,4 +1,4 @@
-name: Installer K3s & kubectl
+name: Installer K3s et kubectl
 
 on:
   workflow_dispatch: # Permet de lancer manuellement le workflow
@@ -25,13 +25,20 @@ jobs:
           sudo ln -s /usr/local/bin/k3s /usr/bin/k3s
           sudo k3s kubectl get nodes
 
-      # 4. Créer le dossier .kube, configurer kubectl et définir les permissions
-      - name: Créer le dossier .kube, configurer kubectl et définir les permissions
+      # 4. Configurer kubectl et définir les permissions
+      - name: Configurer kubectl et définir les permissions
         run: |
+          # Membuat direktori .kube jika belum ada
           mkdir -p $HOME/.kube
-          sudo ln -s /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
-          sudo chown -R runner:runner $HOME/.kube  # Ubah pemilik file untuk memastikan akses
-          sudo chmod 600 $HOME/.kube/config  # Memberikan izin akses yang benar untuk file kube config
+          
+          # Salin file k3s.yaml ke dalam .kube/config tanpa menggunakan sudo
+          cp /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
+          
+          # Ubah pemilik dan izin file
+          chown runner:runner $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+          # Memverifikasi versi kubectl
           export KUBEVERSION=$(kubectl version --short | awk -Fv '/Client Version/ {print $3}')
           echo "La version de Kubernetes est $KUBEVERSION"
 
