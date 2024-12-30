@@ -1,17 +1,17 @@
----
+- name: Add Grafana APT repository
+  apt_repository:
+    repo: "deb https://packages.grafana.com/oss/deb stable main"
+    state: present
+    filename: grafana
+
 - name: Install Grafana
   apt:
     name: grafana
     state: present
     update_cache: yes
 
-- name: Copy Grafana configuration
-  template:
-    src: grafana.ini.j2
-    dest: /etc/grafana/grafana.ini
-
 - name: Enable and start Grafana service
-  service:
+  systemd:
     name: grafana-server
     state: started
     enabled: true
