@@ -1,17 +1,28 @@
-- name: Add Grafana APT repository
-  apt_repository:
-    repo: "deb https://packages.grafana.com/oss/deb stable main"
-    state: present
-    filename: grafana
+# roles/grafana/tasks/main.yml
+- name: Update apt repository cache
+  apt:
+    update_cache: yes
+  become: true
+  when: ansible_distribution == "Ubuntu"
 
-- name: Install Grafana
+- name: Install python3-apt (Grafana dependencies)
+  apt:
+    name: python3-apt
+    state: present
+  become: true
+  when: ansible_distribution == "Ubuntu"
+
+- name: Install Grafana (Ubuntu)
   apt:
     name: grafana
     state: present
-    update_cache: yes
+  become: true
+  when: ansible_distribution == "Ubuntu"
 
-- name: Enable and start Grafana service
+- name: Enable and start Grafana service (Ubuntu)
   systemd:
     name: grafana-server
     state: started
     enabled: true
+  become: true
+  when: ansible_distribution == "Ubuntu"
