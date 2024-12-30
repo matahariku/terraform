@@ -1,30 +1,44 @@
 name: Setup Services with Ansible
 
 on:
-  workflow_dispatch: # Jalankan secara manual
+  workflow_dispatch: # Exécutez manuellement le workflow
 
 jobs:
   setup_services:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout Repository
+      # 1. Checkout du repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Install Required Dependencies
+      # 2. Installation des dépendances requises
       - name: Install Required Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y python3 python3-pip python3-venv python3-dev libffi-dev gcc libssl-dev
 
-      # 3. Install Ansible via pip
+      # 3. Installation d'Ansible via pip
       - name: Install Ansible
         run: |
           pip3 install ansible
           ansible --version
 
-      # 4. Run Ansible Playbook
+      # 4. Ajouter les hôtes SSH à known_hosts
+      - name: Add SSH Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H 34.230.198.148 >> ~/.ssh/known_hosts || echo "Échec de l'ajout de 34.230.198.148"
+          ssh-keyscan -H 3.219.134.157 >> ~/.ssh/known_hosts || echo "Échec de l'ajout de 3.219.134.157"
+
+      # 5. Configurer la clé privée SSH
+      - name: Set Up SSH Private Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
+          chmod 600 ~/.ssh/KEY_BLOC4.pem
+
+      # 6. Exécuter le playbook Ansible
       - name: Run Ansible Playbook
         run: ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml
         env:
