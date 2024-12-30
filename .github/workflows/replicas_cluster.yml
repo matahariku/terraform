@@ -18,13 +18,19 @@ jobs:
       run: |
         curl -sfL https://get.k3s.io | sh -  # Installe K3s (à personnaliser si nécessaire)
 
-    - name: Configure kubectl
+    - name: Set up K3S kubeconfig
       run: |
-        mkdir -p $HOME/.kube  # Crée le dossier .kube si nécessaire
-        cp /etc/rancher/k3s/k3s.yaml $HOME/.kube/config  # Copie le fichier de configuration k3s.yaml dans $HOME/.kube/config
-        chown runner:runner $HOME/.kube/config  # Modifie le propriétaire du fichier
-        chmod 600 $HOME/.kube/config  # Définit les permissions correctes pour le fichier de configuration kubectl
-        kubectl get nodes  # Vérifie si kubectl peut se connecter au cluster
+        # Crée le dossier .kube si nécessaire
+        mkdir -p $HOME/.kube
+        # Copie le fichier de configuration k3s.yaml dans $HOME/.kube/config en utilisant sudo
+        sudo cp /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
+        # Modifie le propriétaire du fichier
+        sudo chown $USER:$USER $HOME/.kube/config
+        # Définit les permissions correctes pour le fichier de configuration kubectl
+        sudo chmod 600 $HOME/.kube/config
+        # Vérifie si kubectl peut se connecter au cluster
+        kubectl get nodes
+      shell: /usr/bin/bash -e {0}
 
     - name: Deploy MongoDB
       run: |
