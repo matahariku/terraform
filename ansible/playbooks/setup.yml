@@ -1,9 +1,6 @@
-- hosts: mongodb
+- name: Setup MongoDB and Grafana
+  hosts: all
   become: true
   roles:
     - mongodb
-
-- hosts: grafana
-  become: true
-  roles:
     - grafana
