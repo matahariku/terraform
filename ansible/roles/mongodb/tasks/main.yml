@@ -25,7 +25,6 @@
   ansible.builtin.yum:
     name: "{{ mongodb_packages }}"
     state: present
-  when: ansible_facts['distribution'] == "Amazon"
 
 - name: Create mongod user
   ansible.builtin.user:
