@@ -1,0 +1,38 @@
+name: Installer K3s et kubectl
+
+on:
+  workflow_dispatch: # Permet de lancer manuellement le workflow
+
+jobs:
+  setup-k3s:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Vérifier le dépôt
+      - name: Vérifier le dépôt
+        uses: actions/checkout@v3
+
+      # 2. Installer les dépendances
+      - name: Installer les dépendances
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl wget
+
+      # 3. Installer K3s
+      - name: Installer K3s
+        run: |
+          curl -sfL https://get.k3s.io | sh -
+          sudo ln -s /usr/local/bin/k3s /usr/bin/k3s
+          sudo k3s kubectl get nodes
+
+      # 4. Configurer kubectl
+      - name: Configurer kubectl
+        run: |
+          sudo ln -s /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
+          export KUBEVERSION=$(kubectl version --short | awk -Fv '/Client Version/ {print $3}')
+          echo "La version de Kubernetes est $KUBEVERSION"
+
+      # 5. Tester kubectl (pour s'assurer que K3s est installé et que kubectl fonctionne)
+      - name: Tester kubectl
+        run: |
+          kubectl get nodes
