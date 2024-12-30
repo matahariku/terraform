@@ -1,0 +1,39 @@
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches:
+      - main  # Déclenche le workflow lors d'un push sur la branche principale
+  workflow_dispatch:  # Permet d'exécuter le workflow manuellement via l'interface GitHub
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Exécute le workflow sur un runner Ubuntu à jour
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2  # Récupère le dernier code depuis le repository
+
+    - name: Set up K3s
+      run: |
+        curl -sfL https://get.k3s.io | sh -  # Installe K3s (à personnaliser si nécessaire)
+
+    - name: Configure kubectl
+      run: |
+        mkdir -p $HOME/.kube  # Crée le dossier .kube si nécessaire
+        cp /etc/rancher/k3s/k3s.yaml $HOME/.kube/config  # Copie le fichier de configuration k3s.yaml dans $HOME/.kube/config
+        chown runner:runner $HOME/.kube/config  # Modifie le propriétaire du fichier
+        chmod 600 $HOME/.kube/config  # Définit les permissions correctes pour le fichier de configuration kubectl
+        kubectl get nodes  # Vérifie si kubectl peut se connecter au cluster
+
+    - name: Deploy MongoDB
+      run: |
+        kubectl apply -f terraform/cluster/mongo-deployment.yaml  # Applique le fichier de déploiement MongoDB à partir du chemin spécifié
+
+    - name: Deploy Grafana
+      run: |
+        kubectl apply -f terraform/cluster/grafana-deployment.yaml  # Applique le fichier de déploiement Grafana à partir du chemin spécifié
+
+    - name: Verify Deployment
+      run: |
+        kubectl get pods  # Vérifie si les pods MongoDB et Grafana sont bien déployés et en cours d'exécution dans le cluster
