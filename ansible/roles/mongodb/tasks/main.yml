@@ -1,4 +1,4 @@
-- name: Add MongoDB repository
+- name: Add MongoDB repository for Amazon Linux
   ansible.builtin.yum_repository:
     name: mongodb-org-6.0
     description: MongoDB Repository
@@ -6,23 +6,16 @@
     gpgcheck: yes
     gpgkey: "{{ mongodb_repo_gpgkey }}"
     enabled: yes
+  when: ansible_facts['distribution'] == "Amazon"
 
-- name: Install required dependencies
-  ansible.builtin.package:
-    name:
-      - ca-certificates
-      - curl
+- name: Remove conflicting curl-minimal package (Amazon Linux)
+  ansible.builtin.yum:
+    name: curl-minimal
+    state: absent
+  when: ansible_facts['distribution'] == "Amazon"
+
+- name: Install curl (Amazon Linux)
+  ansible.builtin.yum:
+    name: curl
     state: present
-
-- name: Install MongoDB packages
-  ansible.builtin.package:
-    name: "{{ mongodb_packages }}"
-    state: present
-
-- name: Start and enable MongoDB service
-  ansible.builtin.systemd:
-    name: "{{ mongodb_service }}"
-    state: started
-    enabled: yes
-  notify:
-    - Restart MongoDB
+  when: ansible_facts['distribution'] == "Amazon"
