@@ -1,19 +1,26 @@
 # roles/mongodb/tasks/main.yml
 
-- name: Install Python3 (Amazon Linux)
+- name: Ensure Python is installed (Amazon Linux)
   yum:
     name: python3
     state: present
   when: ansible_distribution == "Amazon"
 
-- name: Ensure pip3 is installed (Amazon Linux)
-  command: python3 -m ensurepip --upgrade
+- name: Configure Python 3 as the default interpreter (Amazon Linux)
+  alternatives:
+    name: python
+    path: /usr/bin/python3
+    state: present
   when: ansible_distribution == "Amazon"
 
-- name: Upgrade pip3 to the latest version (Amazon Linux)
-  pip:
-    name: pip
-    state: latest
+- name: Ensure MongoDB repository is available (Amazon Linux)
+  amazon.aws.yum_repository:
+    name: mongodb-org-5.0
+    description: MongoDB Repository
+    baseurl: https://repo.mongodb.org/yum/amazon/2/mongodb-org/5.0/x86_64/
+    gpgcheck: yes
+    enabled: yes
+    gpgkey: https://www.mongodb.org/static/pgp/server-5.0.asc
   when: ansible_distribution == "Amazon"
 
 - name: Install MongoDB (Amazon Linux)
