@@ -3,24 +3,26 @@ name: Deploy to Kubernetes
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:
+      - main  # Trigger workflow when pushing to the main branch
+  workflow_dispatch:  # Allow manual trigger of the workflow
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Run the workflow on an Ubuntu runner
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v2  # Checkout the latest code from the repository
+
+    - name: Install kubectl
+      run: |
+        curl -LO "https://dl.k8s.io/release/v1.31.4/bin/linux/amd64/kubectl"
+        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl  # Install kubectl
+        kubectl version --client  # Verify kubectl installation
 
     - name: Set up K3s
       run: |
-        curl -sfL https://get.k3s.io | sh -
-
-    - name: Verify K3s Installation
-      run: |
-        k3s --version
+        curl -sfL https://get.k3s.io | sh -  # Install K3s
 
     - name: Set up K3S kubeconfig
       run: |
@@ -28,28 +30,16 @@ jobs:
         sudo cp /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
         sudo chown $USER:$USER $HOME/.kube/config
         sudo chmod 600 $HOME/.kube/config
-        kubectl get nodes
-
-    - name: Check files in terraform/cluster/
-      run: |
-        ls -la terraform/cluster/
+        kubectl get nodes  # Check Kubernetes nodes
 
     - name: Deploy MongoDB
       run: |
-        kubectl apply -f terraform/cluster/mongo-deployment.yaml
+        kubectl apply -f terraform/cluster/mongo-deployment.yaml  # Apply MongoDB deployment
 
     - name: Deploy Grafana
       run: |
-        kubectl apply -f terraform/cluster/grafana-deployment.yaml
-
-    - name: Verify MongoDB Deployment
-      run: |
-        kubectl get pods -l app=mongodb
-
-    - name: Verify Grafana Deployment
-      run: |
-        kubectl get pods -l app=grafana
+        kubectl apply -f terraform/cluster/grafana-deployment.yaml  # Apply Grafana deployment
 
     - name: Verify Deployment
       run: |
-        kubectl get pods
+        kubectl get pods  # Verify MongoDB and Grafana pods are running
