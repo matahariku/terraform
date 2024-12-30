@@ -12,22 +12,36 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Konfigurasi SSH Known Hosts
+      # 2. Configure SSH Known Hosts
       - name: Configure SSH Known Hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H 34.230.198.148 >> ~/.ssh/known_hosts
           ssh-keyscan -H 3.219.134.157 >> ~/.ssh/known_hosts
-      
-      # 3. Konfigurasikan Kredensial Git
+
+      # 3. Set Up SSH Private Key
+      - name: Set Up SSH Private Key
+        run: |
+          echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
+          chmod 600 ~/.ssh/KEY_BLOC4.pem
+
+      # 4. Configure Git Credentials
       - name: Configure Git Credentials
         run: |
           git config --global url."https://matahariku:${{ secrets.TOKEN }}@github.com/".insteadOf "https://github.com/"
 
-      # 4. Install Ansible Roles
+      # 5. Install Ansible
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      # 6. Install Ansible Roles
       - name: Install Ansible Roles
         run: ansible-galaxy install -r ansible/requirements.yml --force
 
-      # 5. Run Ansible Playbook to Install MongoDB and Grafana
+      # 7. Run Ansible Playbook to Install MongoDB and Grafana
       - name: Run Ansible Playbook
         run: ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml
+        env:
+          ANSIBLE_PRIVATE_KEY_FILE: ~/.ssh/KEY_BLOC4.pem
