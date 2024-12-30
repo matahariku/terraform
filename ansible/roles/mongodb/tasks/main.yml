@@ -11,6 +11,8 @@
 - name: Update yum cache
   ansible.builtin.yum:
     update_cache: yes
+  when: ansible_facts['distribution'] == "Amazon"
+
 
 - name: Check availability of MongoDB packages
   ansible.builtin.shell: yum list available | grep mongodb
