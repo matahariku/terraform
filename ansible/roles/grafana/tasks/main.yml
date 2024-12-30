@@ -1,5 +1,12 @@
 # roles/grafana/tasks/main.yml
 
+- name: Ensure /usr/share/keyrings directory exists
+  file:
+    path: /usr/share/keyrings
+    state: directory
+    mode: '0755'
+  become: true
+
 - name: Add Grafana GPG key
   get_url:
     url: https://packages.grafana.com/gpg.key
