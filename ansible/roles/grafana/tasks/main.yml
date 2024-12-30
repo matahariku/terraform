@@ -1,47 +1,46 @@
 # roles/grafana/tasks/main.yml
 
-- name: Ensure /usr/share/keyrings directory exists
+- name: Ensure /usr/share/keyrings directory exists (Ubuntu)
   file:
     path: /usr/share/keyrings
     state: directory
   when: ansible_distribution == "Ubuntu"
 
-- name: Add Grafana GPG key
+- name: Add Grafana GPG key (Ubuntu)
   get_url:
     url: https://packages.grafana.com/gpg.key
     dest: /usr/share/keyrings/grafana-archive-keyring.gpg
     mode: '0644'
   when: ansible_distribution == "Ubuntu"
 
-- name: Add Grafana APT repository
+- name: Add Grafana APT repository (Ubuntu)
   copy:
     content: |
       deb [signed-by=/usr/share/keyrings/grafana-archive-keyring.gpg] https://packages.grafana.com/oss/deb stable main
     dest: /etc/apt/sources.list.d/grafana.list
   when: ansible_distribution == "Ubuntu"
 
-- name: Update apt repository cache
+- name: Update trusted GPG keys for Grafana repository
+  shell: |
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 963FA27710458545
+  when: ansible_distribution == "Ubuntu"
+
+- name: Update apt repository cache (Ubuntu)
   apt:
     update_cache: yes
   when: ansible_distribution == "Ubuntu"
 
-- name: Install Grafana
+- name: Install Grafana (Ubuntu)
   apt:
     name: grafana
     state: present
   when: ansible_distribution == "Ubuntu"
 
-- name: Enable and start Grafana service
+- name: Enable and start Grafana service (Ubuntu)
   systemd:
     name: grafana-server
     state: started
     enabled: true
-  when: ansible_distribution == "Ubuntu"
-
-- name: Ensure /etc/grafana directory exists
-  file:
-    path: /etc/grafana
-    state: directory
   when: ansible_distribution == "Ubuntu"
 
 - name: Configure Grafana
@@ -51,4 +50,3 @@
   notify:
     - Restart Grafana
   when: ansible_distribution == "Ubuntu"
-
