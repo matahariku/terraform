@@ -1,6 +1,4 @@
-mongodb_repo_url: https://repo.mongodb.org/yum/amazon/2023/mongodb-org/6.0/x86_64/
-mongodb_repo_gpgkey: https://www.mongodb.org/static/pgp/server-6.0.asc
-mongodb_packages:
-  - mongodb-org
-  - mongodb-mongosh
-mongodb_service: mongod
+docker_image: "mongo:6.0"
+docker_container_name: "mongodb"
+docker_port: 27017
+docker_volume_path: "/var/lib/docker/volumes/mongodb_data/_data"

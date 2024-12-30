@@ -1,13 +1,15 @@
 galaxy_info:
   author: "matahariku"
-  description: "Role to install and configure MongoDB"
+  description: "Role to install and configure MongoDB using Docker"
   company: "Your Company Name"
   license: "MIT"
   min_ansible_version: "2.9"
   platforms:
+    - name: Amazon
+      versions:
+        - 2
     - name: Ubuntu
       versions:
-        - bionic
         - focal
 
 dependencies: []

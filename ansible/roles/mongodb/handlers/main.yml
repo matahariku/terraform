@@ -1,4 +1,4 @@
-- name: Restart MongoDB
-  ansible.builtin.systemd:
-    name: "{{ mongodb_service }}"
+- name: Restart MongoDB Docker Container
+  ansible.builtin.docker_container:
+    name: "{{ docker_container_name }}"
     state: restarted

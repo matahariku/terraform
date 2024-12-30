@@ -1,50 +1,36 @@
-- name: Add MongoDB repository manually
-  ansible.builtin.shell: |
-    echo "[mongodb-org-6.0]
-    name=MongoDB Repository
-    baseurl=https://repo.mongodb.org/yum/amazon/2023/mongodb-org/6.0/x86_64/
-    gpgcheck=1
-    enabled=1
-    gpgkey=https://www.mongodb.org/static/pgp/server-6.0.asc" > /etc/yum.repos.d/mongodb-org-6.0.repo
-  when: ansible_facts['distribution'] == "Amazon"
-
-- name: Update yum cache
+- name: Install Docker
   ansible.builtin.yum:
-    update_cache: yes
-  when: ansible_facts['distribution'] == "Amazon"
-
-- name: Verify MongoDB repository file
-  ansible.builtin.shell: cat /etc/yum.repos.d/mongodb-org-6.0.repo
-  register: mongodb_repo_file
-  ignore_errors: yes
-
-- name: Debug MongoDB repository file
-  ansible.builtin.debug:
-    var: mongodb_repo_file.stdout
-
-- name: Check availability of MongoDB packages
-  ansible.builtin.shell: |
-    if [ "{{ ansible_facts['distribution'] }}" == "Amazon" ]; then
-      yum list available | grep mongodb
-    else
-      echo "Not applicable for this OS"
-    fi
-  register: mongodb_package_check
-  ignore_errors: yes
-
-- name: Debug MongoDB package check
-  ansible.builtin.debug:
-    var: mongodb_package_check.stdout
-
-- name: Install MongoDB and Mongosh
-  ansible.builtin.yum:
-    name: "{{ mongodb_packages }}"
+    name: docker
     state: present
   when: ansible_facts['distribution'] == "Amazon"
 
-- name: Start MongoDB service
-  ansible.builtin.systemd:
-    name: "{{ mongodb_service }}"
+- name: Start Docker Service
+  ansible.builtin.service:
+    name: docker
     state: started
     enabled: yes
-  when: ansible_facts['distribution'] == "Amazon"
+
+- name: Pull MongoDB Docker Image
+  ansible.builtin.docker_image:
+    name: "{{ docker_image }}"
+    source: pull
+
+- name: Create MongoDB Volume (Optional)
+  ansible.builtin.command:
+    cmd: docker volume create mongodb_data
+  ignore_errors: yes
+
+- name: Run MongoDB Docker Container
+  ansible.builtin.docker_container:
+    name: "{{ docker_container_name }}"
+    image: "{{ docker_image }}"
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ docker_port }}:27017"
+    volumes:
+      - "mongodb_data:/data/db"
+    env:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: devops
+  notify: Restart MongoDB Docker Container
