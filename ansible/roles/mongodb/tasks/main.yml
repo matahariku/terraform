@@ -1,12 +1,14 @@
 # roles/mongodb/tasks/main.yml
 
 - name: Ensure Python is installed (Amazon Linux)
+  # Memastikan Python 3 terinstal pada Amazon Linux
   yum:
     name: python3
     state: present
   when: ansible_distribution == "Amazon"
 
 - name: Configure Python 3 as the default interpreter (Amazon Linux)
+  # Mengonfigurasi Python 3 sebagai interpreter default
   alternatives:
     name: python
     path: /usr/bin/python3
@@ -14,6 +16,7 @@
   when: ansible_distribution == "Amazon"
 
 - name: Ensure MongoDB repository is available (Amazon Linux)
+  # Menambahkan repository MongoDB untuk Amazon Linux
   amazon.aws.yum_repository:
     name: mongodb-org-5.0
     description: MongoDB Repository
@@ -24,12 +27,14 @@
   when: ansible_distribution == "Amazon"
 
 - name: Install MongoDB (Amazon Linux)
+  # Menginstal paket MongoDB dari repository yang ditambahkan
   yum:
     name: mongodb-org
     state: present
   when: ansible_distribution == "Amazon"
 
 - name: Enable and start MongoDB service (Amazon Linux)
+  # Mengaktifkan dan memulai layanan MongoDB
   systemd:
     name: mongod
     state: started
