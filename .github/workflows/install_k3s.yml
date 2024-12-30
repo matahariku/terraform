@@ -1,4 +1,4 @@
-name: Installer K3s et kubectl
+name: Installer K3s & kubectl
 
 on:
   workflow_dispatch: # Permet de lancer manuellement le workflow
@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir -p $HOME/.kube
           sudo ln -s /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
-          sudo chown -R $USER:$USER $HOME/.kube  # Mengubah pemilik direktori .kube menjadi user yang menjalankan workflow
+          sudo chown -R runner:runner $HOME/.kube  # Ubah pemilik file untuk memastikan akses
           sudo chmod 600 $HOME/.kube/config  # Memberikan izin akses yang benar untuk file kube config
           export KUBEVERSION=$(kubectl version --short | awk -Fv '/Client Version/ {print $3}')
           echo "La version de Kubernetes est $KUBEVERSION"
@@ -38,4 +38,5 @@ jobs:
       # 5. Tester kubectl
       - name: Tester kubectl
         run: |
+          echo "Tester kubectl"
           kubectl get nodes
