@@ -1,4 +1,4 @@
-# Deploy AWS Instances
+# Deploy AWS Instances mongodb & grafana
 name: Deploy AWS Instances
 
 on:
