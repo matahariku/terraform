@@ -14,8 +14,12 @@ jobs:
     - name: Vérification du code
       uses: actions/checkout@v2  # Récupère la dernière version du code depuis le repository
 
-    - name: Configuration d'Ansible
-      uses: gaurdian/ansible@v2  # Installe Ansible sur le runner GitHub Actions
+    - name: Install Ansible with pip3
+      run: |
+        sudo apt update
+        sudo apt install -y python3-pip
+        pip3 install ansible
+
 
     - name: Copier le kubeconfig sur les nœuds cibles
       run: |
@@ -25,3 +29,7 @@ jobs:
         ANSIBLE_HOST_KEY_CHECKING: "False"  # Désactive la vérification des clés SSH lors de la première connexion
         ANSIBLE_SSH_PRIVATE_KEY_FILE: ${{ secrets.ANSIBLE_PRIVATE_KEY }}  # Clé privée SSH stockée dans les secrets GitHub
         ANSIBLE_USER: ${{ secrets.ANSIBLE_USER }}  # Utilisateur SSH pour la connexion (par exemple, ubuntu ou ec2-user)
+
+    - name: Vérifier les nœuds Kubernetes
+      run: |
+        kubectl get nodes  # Vérifie que la connexion au cluster Kubernetes fonctionne
