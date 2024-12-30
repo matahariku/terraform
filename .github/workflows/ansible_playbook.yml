@@ -1,45 +1,39 @@
-name: Run Ansible Playbook
+name: Deploy and Configure Applications with Ansible
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch: # Permet de déclencher le workflow manuellement
+  workflow_dispatch: # Memungkinkan workflow dijalankan secara manual
 
 jobs:
   ansible:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Récupérer le dépôt
+      # 1. Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Configurer les identifiants Git
-        # Assure qu'Ansible puisse télécharger les dépendances
+      # 2. Configure Git Credentials
+        # Memastikan Ansible dapat mengunduh dependensi
       - name: Configure Git Credentials
         run: |
           git config --global url."https://matahariku:${{ secrets.TOKEN }}@github.com/".insteadOf "https://github.com/"
       
-      # 3. Ajouter la clé SSH privée
-        # Utiliser la clé privée provenant du secret nommé `KEY_BLOC4`
-      - name: Add SSH Private Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
-          chmod 600 ~/.ssh/KEY_BLOC4.pem
-
-      # 4. Tester la connexion SSH
-        # Tester la connexion SSH à l'instance MongoDB
+      # 3. Test SSH Connection to MongoDB
+        # Tes koneksi SSH ke instance MongoDB
       - name: Test SSH Connection to MongoDB
         run: ssh -o StrictHostKeyChecking=no ec2-user@34.230.198.148 hostname
 
-      # 5. Installer les rôles Ansible
-        # Installer tous les rôles requis depuis `ansible/requirements.yml`
+      # 4. Test SSH Connection to Grafana
+        # Tes koneksi SSH ke instance Grafana
+      - name: Test SSH Connection to Grafana
+        run: ssh -o StrictHostKeyChecking=no ubuntu@3.219.134.157 hostname
+
+      # 5. Install Ansible Roles
+        # Install semua role yang diperlukan
       - name: Install Roles from requirements.yml
         run: ansible-galaxy install -r ansible/requirements.yml --force
 
-      # 6. Exécuter le playbook Ansible
-        # Lancer le playbook setup.yml avec l'inventaire existant
+      # 6. Run Ansible Playbook
+        # Jalankan playbook Ansible untuk menginstal MongoDB dan Grafana
       - name: Run Ansible Playbook
         run: ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml
