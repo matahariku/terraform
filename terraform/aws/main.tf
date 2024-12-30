@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket         = "mongodb-backup-myvm" 
+    bucket         = "deploy-aws-terra" 
     key            = "terraform/state/aws/terraform.tfstate" 
     region         = "us-east-1" 
     dynamodb_table = "terraform-lock-table"
