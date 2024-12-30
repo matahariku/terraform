@@ -1,0 +1,13 @@
+galaxy_info:
+  author: "matahariku"
+  description: "Role to install and configure MongoDB"
+  company: "Your Company Name"
+  license: "MIT"
+  min_ansible_version: "2.9"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - bionic
+        - focal
+
+dependencies: []
