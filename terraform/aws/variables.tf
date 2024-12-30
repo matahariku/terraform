@@ -5,7 +5,7 @@ variable "region" {
 
 variable "key_pair_name" {
   description = "AWS key pair name for SSH access"
-  default     = "KEY_CAFE"
+  default     = "KEY_BLOC4"
 }
 
 variable "vpc_cidr" {
