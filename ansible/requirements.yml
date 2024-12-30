@@ -1,9 +1,12 @@
 roles:
   - name: mongodb
-    src: https://github.com/matahariku/mongodb-role.git
+    src: https://github.com/matahariku/cafe-nangka.git
     scm: git
     version: main
+    path: ansible/roles/mongodb
+
   - name: grafana
-    src: https://github.com/matahariku/grafana-role.git
+    src: https://github.com/matahariku/cafe-nangka.git
     scm: git
     version: main
+    path: ansible/roles/grafana
