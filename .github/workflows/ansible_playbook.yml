@@ -35,6 +35,8 @@ jobs:
       - name: Add SSH Known Hosts
         run: |
           ssh-keyscan -H 34.230.198.148 >> ~/.ssh/known_hosts
+          ssh-keyscan -H 3.219.134.157 >> ~/.ssh/known_hosts
+
         
 
       # 5. Debug SSH Connection
