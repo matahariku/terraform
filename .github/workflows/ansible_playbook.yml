@@ -1,31 +1,24 @@
 name: Run Ansible Playbook
 
 on:
-  workflow_dispatch: # Memungkinkan eksekusi manual
+  workflow_dispatch:
 
 jobs:
-  ansible-playbook:
+  ansible_deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
+      # 1. Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
       # 2. Install Ansible
       - name: Install Ansible
         run: |
-          sudo apt update
-          sudo apt install -y ansible
+          sudo apt-get update
+          sudo apt-get install -y ansible
 
-      # 3. Setup SSH Keys
-      - name: Configure SSH Access
-        run: |
-          echo "${{ secrets.VOCKEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          echo -e "Host *\n\tStrictHostKeyChecking no\n" > ~/.ssh/config
-
-      # 4. Run Ansible Playbook
-      - name: Execute Ansible Playbook
+      # 3. Run Ansible Playbook
+      - name: Run Ansible Playbook
         run: |
           ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml
