@@ -12,7 +12,7 @@ jobs:
       - name: Vérifier le dépôt
         uses: actions/checkout@v3
 
-      # 2. Installer les dépendances
+      # 2. Installer les dépendances nécessaires
       - name: Installer les dépendances
         run: |
           sudo apt-get update
@@ -25,20 +25,22 @@ jobs:
           sudo ln -s /usr/local/bin/k3s /usr/bin/k3s
           sudo k3s kubectl get nodes
 
-      # 4. Configurer kubectl et définir les permissions
+      # 4. Modifier les permissions et configurer kubectl
       - name: Configurer kubectl et définir les permissions
         run: |
-          # Membuat direktori .kube jika belum ada
+          # Créer le répertoire .kube s'il n'existe pas déjà
           mkdir -p $HOME/.kube
           
-          # Salin file k3s.yaml ke dalam .kube/config tanpa menggunakan sudo
+          # Changer la propriété du fichier k3s.yaml pour qu'il soit accessible par l'utilisateur runner
+          sudo chown runner:runner /etc/rancher/k3s/k3s.yaml
+          
+          # Copier le fichier k3s.yaml dans .kube/config
           cp /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
           
-          # Ubah pemilik dan izin file
-          chown runner:runner $HOME/.kube/config
+          # Changer les permissions du fichier pour s'assurer que seul l'utilisateur runner peut y accéder
           chmod 600 $HOME/.kube/config
 
-          # Memverifikasi versi kubectl
+          # Vérifier la version de kubectl
           export KUBEVERSION=$(kubectl version --short | awk -Fv '/Client Version/ {print $3}')
           echo "La version de Kubernetes est $KUBEVERSION"
 
