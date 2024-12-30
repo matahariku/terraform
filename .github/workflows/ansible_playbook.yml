@@ -1,10 +1,10 @@
-name: Install MongoDB and Grafana
+name: Setup Services with Ansible
 
 on:
   workflow_dispatch: # Jalankan secara manual
 
 jobs:
-  install_services:
+  setup_services:
     runs-on: ubuntu-latest
 
     steps:
@@ -12,35 +12,26 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Configure SSH Known Hosts
-      - name: Configure SSH Known Hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H 34.230.198.148 >> ~/.ssh/known_hosts
-          ssh-keyscan -H 3.219.134.157 >> ~/.ssh/known_hosts
-
-      # 3. Set Up SSH Private Key
+      # 2. Set Up SSH Private Key
       - name: Set Up SSH Private Key
         run: |
+          mkdir -p ~/.ssh
           echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
           chmod 600 ~/.ssh/KEY_BLOC4.pem
 
-      # 4. Configure Git Credentials
-      - name: Configure Git Credentials
-        run: |
-          git config --global url."https://matahariku:${{ secrets.TOKEN }}@github.com/".insteadOf "https://github.com/"
-
-      # 5. Install Ansible
-      - name: Install Ansible
+      # 3. Install Dependencies
+      - name: Install Required Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ansible
+          sudo apt-get install -y python3 python3-pip python3-venv python3-dev libffi-dev gcc libssl-dev
 
-      # 6. Install Ansible Roles
-      - name: Install Ansible Roles
-        run: ansible-galaxy install -r ansible/requirements.yml --force
+      # 4. Install Ansible via pip
+      - name: Install Ansible
+        run: |
+          pip3 install ansible
+          ansible --version
 
-      # 7. Run Ansible Playbook to Install MongoDB and Grafana
+      # 5. Run Ansible Playbook to Setup Services
       - name: Run Ansible Playbook
         run: ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml
         env:
