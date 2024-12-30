@@ -18,7 +18,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ansible
 
-      # 3. Run Ansible Playbook
+      # 3. Set Up Ansible Directory
+      - name: Prepare Ansible Roles
+        run: |
+          mkdir -p ansible/playbooks/roles
+          cp -r ansible/roles/* ansible/playbooks/roles/
+          ansible-galaxy install -r ansible/requirements.yml
+
+      # 4. Run Ansible Playbook
       - name: Run Ansible Playbook
         run: |
           ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml
