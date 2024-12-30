@@ -10,15 +10,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      # 2. Configure Git Credentials
+        # Pastikan Ansible dapat mengunduh dependencies dengan benar
       - name: Configure Git Credentials
         run: |
           git config --global url."https://matahariku:${{ secrets.TOKEN }}@github.com/".insteadOf "https://github.com/"
+      
+      # 3. Add SSH Private Key
+        # Gunakan key dari secrets dengan nama `KEY_CAFE`
+      - name: Add SSH Private Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.KEY_CAFE }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
+      # 4. Test SSH Connection
+        # Tes koneksi SSH ke instance MongoDB
+      - name: Test SSH Connection to MongoDB
+        run: ssh -o StrictHostKeyChecking=no ec2-user@<MongoDB_PUBLIC_IP> hostname
+
+      # 5. Install Ansible Roles
+        # Install semua roles yang diperlukan dari `ansible/requirements.yml`
       - name: Install Roles from requirements.yml
         run: ansible-galaxy install -r ansible/requirements.yml --force
 
+      # 6. Run Ansible Playbook
+        # Jalankan playbook setup.yml dengan inventory yang sudah ada
       - name: Run Ansible Playbook
         run: ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml
