@@ -14,13 +14,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Set Up GitHub Token
+      # 2. Configure Git Credentials
       - name: Configure Git Credentials
         run: |
           git config --global url."https://matahariku:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
       
       # 3. Install Ansible Roles
-      - name: Install Roles from requirements.yml
+      - name: Install Ansible Roles
         run: ansible-galaxy install -r ansible/requirements.yml --force
 
       # 4. Run Ansible Playbook
