@@ -12,26 +12,19 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Set Up SSH Private Key
-      - name: Set Up SSH Private Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
-          chmod 600 ~/.ssh/KEY_BLOC4.pem
-
-      # 3. Install Dependencies
+      # 2. Install Dependencies
       - name: Install Required Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y python3 python3-pip python3-venv python3-dev libffi-dev gcc libssl-dev
 
-      # 4. Install Ansible via pip
+      # 3. Install Ansible via pip
       - name: Install Ansible
         run: |
           pip3 install ansible
           ansible --version
 
-      # 5. Run Ansible Playbook to Setup Services
+      # 4. Run Ansible Playbook
       - name: Run Ansible Playbook
         run: ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml
         env:
