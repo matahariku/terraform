@@ -28,12 +28,6 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-east-1
 
-      # Add SSH Key for EC2
-      - name: Add SSH Key for EC2
-        run: |
-          echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
-          chmod 400 ~/.ssh/KEY_BLOC4.pem
-
       # Initialize Terraform
       - name: Initialize Terraform
         run: terraform init
