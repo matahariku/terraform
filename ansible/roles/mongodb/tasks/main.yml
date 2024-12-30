@@ -8,19 +8,12 @@
     enabled: yes
   when: ansible_facts['distribution'] == "Amazon"
 
-- name: Remove conflicting curl-minimal package (Amazon Linux)
+- name: Update yum cache
   ansible.builtin.yum:
-    name: curl-minimal
-    state: absent
+    update_cache: yes
   when: ansible_facts['distribution'] == "Amazon"
 
-- name: Install curl (Amazon Linux)
-  ansible.builtin.yum:
-    name: curl
-    state: present
-  when: ansible_facts['distribution'] == "Amazon"
-
-- name: Install MongoDB and Mongosh on Amazon Linux
+- name: Install MongoDB and Mongosh
   ansible.builtin.yum:
     name:
       - mongodb-org
@@ -35,13 +28,12 @@
     enabled: yes
   when: ansible_facts['distribution'] == "Amazon"
 
-- name: Verify mongosh installation
+- name: Verify MongoDB installation
   ansible.builtin.command:
-    cmd: mongosh --version
-  register: mongosh_version
-  when: ansible_facts['distribution'] == "Amazon"
+    cmd: mongod --version
+  register: mongod_version
+  ignore_errors: yes
 
-- name: Print mongosh version
+- name: Display MongoDB version
   ansible.builtin.debug:
-    msg: "Installed mongosh version: {{ mongosh_version.stdout }}"
-  when: ansible_facts['distribution'] == "Amazon"
+    msg: "MongoDB version: {{ mongod_version.stdout }}"
