@@ -1,15 +1,17 @@
 # roles/grafana/tasks/main.yml
 
 - name: Add Grafana GPG key
-  apt_key:
+  get_url:
     url: https://packages.grafana.com/gpg.key
-    state: present
+    dest: /usr/share/keyrings/grafana-archive-keyring.gpg
+    mode: '0644'
   become: true
 
 - name: Add Grafana APT repository
-  apt_repository:
-    repo: "deb https://packages.grafana.com/oss/deb stable main"
-    state: present
+  copy:
+    content: "deb [signed-by=/usr/share/keyrings/grafana-archive-keyring.gpg] https://packages.grafana.com/oss/deb stable main\n"
+    dest: /etc/apt/sources.list.d/grafana.list
+    mode: '0644'
   become: true
 
 - name: Update apt repository cache
