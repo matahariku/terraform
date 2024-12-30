@@ -11,13 +11,27 @@
 - name: Update yum cache
   ansible.builtin.yum:
     update_cache: yes
-  when: ansible_facts['distribution'] == "Amazon"
+
+- name: Check availability of MongoDB packages
+  ansible.builtin.shell: yum list available | grep mongodb
+  register: mongodb_package_check
+  ignore_errors: yes
+
+- name: Debug MongoDB package check
+  ansible.builtin.debug:
+    var: mongodb_package_check.stdout
 
 - name: Install MongoDB and Mongosh
   ansible.builtin.yum:
     name: "{{ mongodb_packages }}"
     state: present
   when: ansible_facts['distribution'] == "Amazon"
+
+- name: Create mongod user
+  ansible.builtin.user:
+    name: mongod
+    state: present
+    shell: /sbin/nologin
 
 - name: Deploy mongod configuration
   ansible.builtin.template:
