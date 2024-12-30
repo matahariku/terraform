@@ -1,7 +1,9 @@
 roles:
   - name: mongodb
-    src: git+https://github.com/matahariku/mongodb-role.git
+    src: https://github.com/matahariku/mongodb-role.git
+    scm: git
     version: main
   - name: grafana
-    src: git+https://github.com/matahariku/grafana-role.git
+    src: https://github.com/matahariku/grafana-role.git
+    scm: git
     version: main
