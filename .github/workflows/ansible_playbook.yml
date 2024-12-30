@@ -10,19 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Configure Git Credentials
       - name: Configure Git Credentials
         run: |
-          git config --global url."https://matahariku:${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
-      
-      # 3. Install Ansible Roles
-      - name: Install Ansible Roles
+          git config --global url."https://matahariku:${{ secrets.TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+      - name: Install Roles from requirements.yml
         run: ansible-galaxy install -r ansible/requirements.yml --force
 
-      # 4. Run Ansible Playbook
       - name: Run Ansible Playbook
         run: ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml
