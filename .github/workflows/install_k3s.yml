@@ -18,21 +18,23 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y curl wget
 
-      # 3. Installer K3s
-      - name: Installer K3s
+      # 3. Installer k3s
+      - name: Installer k3s
         run: |
           curl -sfL https://get.k3s.io | sh -
           sudo ln -s /usr/local/bin/k3s /usr/bin/k3s
           sudo k3s kubectl get nodes
 
-      # 4. Configurer kubectl
-      - name: Configurer kubectl
+      # 4. Créer le dossier .kube, configurer kubectl et définir les permissions
+      - name: Créer le dossier .kube, configurer kubectl et définir les permissions
         run: |
+          mkdir -p $HOME/.kube
           sudo ln -s /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
+          sudo chmod 600 $HOME/.kube/config  # Set permissions for the kube config file
           export KUBEVERSION=$(kubectl version --short | awk -Fv '/Client Version/ {print $3}')
           echo "La version de Kubernetes est $KUBEVERSION"
 
-      # 5. Tester kubectl (pour s'assurer que K3s est installé et que kubectl fonctionne)
+      # 5. Tester kubectl
       - name: Tester kubectl
         run: |
           kubectl get nodes
