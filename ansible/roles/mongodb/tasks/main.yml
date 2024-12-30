@@ -1,11 +1,11 @@
-- name: Add MongoDB repository for Amazon Linux
-  ansible.builtin.yum_repository:
-    name: mongodb-org-6.0
-    description: MongoDB Repository
-    baseurl: "{{ mongodb_repo_url }}"
-    gpgcheck: yes
-    gpgkey: "{{ mongodb_repo_gpgkey }}"
-    enabled: yes
+- name: Add MongoDB repository manually
+  ansible.builtin.shell: |
+    echo "[mongodb-org-6.0]
+    name=MongoDB Repository
+    baseurl=https://repo.mongodb.org/yum/amazon/2023/mongodb-org/6.0/x86_64/
+    gpgcheck=1
+    enabled=1
+    gpgkey=https://www.mongodb.org/static/pgp/server-6.0.asc" > /etc/yum.repos.d/mongodb-org-6.0.repo
   when: ansible_facts['distribution'] == "Amazon"
 
 - name: Update yum cache
@@ -13,9 +13,22 @@
     update_cache: yes
   when: ansible_facts['distribution'] == "Amazon"
 
+- name: Verify MongoDB repository file
+  ansible.builtin.shell: cat /etc/yum.repos.d/mongodb-org-6.0.repo
+  register: mongodb_repo_file
+  ignore_errors: yes
+
+- name: Debug MongoDB repository file
+  ansible.builtin.debug:
+    var: mongodb_repo_file.stdout
 
 - name: Check availability of MongoDB packages
-  ansible.builtin.shell: yum list available | grep mongodb
+  ansible.builtin.shell: |
+    if [ "{{ ansible_facts['distribution'] }}" == "Amazon" ]; then
+      yum list available | grep mongodb
+    else
+      echo "Not applicable for this OS"
+    fi
   register: mongodb_package_check
   ignore_errors: yes
 
@@ -27,33 +40,11 @@
   ansible.builtin.yum:
     name: "{{ mongodb_packages }}"
     state: present
+  when: ansible_facts['distribution'] == "Amazon"
 
-- name: Create mongod user
-  ansible.builtin.user:
-    name: mongod
-    state: present
-    shell: /sbin/nologin
-
-- name: Deploy mongod configuration
-  ansible.builtin.template:
-    src: mongod.conf.j2
-    dest: /etc/mongod.conf
-    owner: mongod
-    group: mongod
-    mode: '0644'
-
-- name: Restart MongoDB service
+- name: Start MongoDB service
   ansible.builtin.systemd:
     name: "{{ mongodb_service }}"
-    state: restarted
+    state: started
     enabled: yes
-
-- name: Verify MongoDB installation
-  ansible.builtin.command:
-    cmd: mongod --version
-  register: mongod_version
-  ignore_errors: yes
-
-- name: Display MongoDB version
-  ansible.builtin.debug:
-    msg: "MongoDB version: {{ mongod_version.stdout }}"
+  when: ansible_facts['distribution'] == "Amazon"
