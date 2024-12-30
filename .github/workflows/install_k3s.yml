@@ -1,4 +1,4 @@
-name: Installer k3s et kubectl
+name: Installer K3s et kubectl
 
 on:
   workflow_dispatch: # Permet de lancer manuellement le workflow
