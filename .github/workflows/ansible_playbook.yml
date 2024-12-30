@@ -1,31 +1,48 @@
 name: Déployer et Configurer des Applications avec Ansible
 
 on:
-  workflow_dispatch: # Permet de lancer le workflow manuellement
+  workflow_dispatch: # Permet de déclencher le workflow manuellement
 
 jobs:
   ansible:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Récupérer le dépôt
+      # Étape 1 : Récupérer le dépôt
       # Assure que le dépôt est téléchargé depuis GitHub
       - name: Récupérer le dépôt
         uses: actions/checkout@v3
 
-      # 2. Configurer les identifiants Git
+      # Étape 2 : Configurer les identifiants Git
       # Garantit qu'Ansible peut récupérer les rôles nécessaires
       - name: Configurer les identifiants Git
         run: |
           git config --global url."https://matahariku:${{ secrets.TOKEN }}@github.com/".insteadOf "https://github.com/"
+      
+      # Étape 3 : Ajouter la clé privée SSH
+      # Assure que la clé privée SSH est configurée pour l'accès distant
+      - name: Ajouter la clé SSH privée
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
+          chmod 400 ~/.ssh/KEY_BLOC4.pem
 
-      # 3. Installer les rôles Ansible
+      # Étape 4 : Créer le fichier known_hosts
+      # Ajoute les empreintes digitales des hôtes MongoDB et Grafana
+      - name: Créer le fichier known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          touch ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          ssh-keyscan -H 34.230.198.148 >> ~/.ssh/known_hosts
+          ssh-keyscan -H 3.219.134.157 >> ~/.ssh/known_hosts
+
+      # Étape 5 : Installer les rôles Ansible
       # Installe tous les rôles nécessaires depuis le fichier requirements.yml
       - name: Installer les rôles Ansible
         run: ansible-galaxy install -r ansible/requirements.yml --force
 
-      # 4. Exécuter le playbook Ansible
+      # Étape 6 : Exécuter le playbook Ansible
       # Lance le playbook pour configurer MongoDB et Grafana sur les instances
       - name: Exécuter le playbook Ansible
         run: ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml
-
