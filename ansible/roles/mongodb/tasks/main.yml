@@ -2,9 +2,9 @@
   ansible.builtin.yum_repository:
     name: mongodb-org-6.0
     description: MongoDB Repository
-    baseurl: "https://repo.mongodb.org/yum/amazon/2023/mongodb-org/6.0/x86_64/"
+    baseurl: "{{ mongodb_repo_url }}"
     gpgcheck: yes
-    gpgkey: "https://www.mongodb.org/static/pgp/server-6.0.asc"
+    gpgkey: "{{ mongodb_repo_gpgkey }}"
     enabled: yes
   when: ansible_facts['distribution'] == "Amazon"
 
@@ -15,18 +15,23 @@
 
 - name: Install MongoDB and Mongosh
   ansible.builtin.yum:
-    name:
-      - mongodb-org
-      - mongodb-mongosh
+    name: "{{ mongodb_packages }}"
     state: present
   when: ansible_facts['distribution'] == "Amazon"
 
-- name: Start MongoDB service
-  ansible.builtin.service:
-    name: mongod
-    state: started
+- name: Deploy mongod configuration
+  ansible.builtin.template:
+    src: mongod.conf.j2
+    dest: /etc/mongod.conf
+    owner: mongod
+    group: mongod
+    mode: '0644'
+
+- name: Restart MongoDB service
+  ansible.builtin.systemd:
+    name: "{{ mongodb_service }}"
+    state: restarted
     enabled: yes
-  when: ansible_facts['distribution'] == "Amazon"
 
 - name: Verify MongoDB installation
   ansible.builtin.command:
