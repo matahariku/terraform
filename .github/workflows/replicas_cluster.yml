@@ -3,43 +3,53 @@ name: Deploy to Kubernetes
 on:
   push:
     branches:
-      - main  # Déclenche le workflow lors d'un push sur la branche principale
-  workflow_dispatch:  # Permet d'exécuter le workflow manuellement via l'interface GitHub
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # Exécute le workflow sur un runner Ubuntu à jour
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2  # Récupère le dernier code depuis le repository
+      uses: actions/checkout@v2
 
     - name: Set up K3s
       run: |
-        curl -sfL https://get.k3s.io | sh -  # Installe K3s (à personnaliser si nécessaire)
+        curl -sfL https://get.k3s.io | sh -
+
+    - name: Verify K3s Installation
+      run: |
+        k3s --version
 
     - name: Set up K3S kubeconfig
       run: |
-        # Crée le dossier .kube si nécessaire
         mkdir -p $HOME/.kube
-        # Copie le fichier de configuration k3s.yaml dans $HOME/.kube/config en utilisant sudo
         sudo cp /etc/rancher/k3s/k3s.yaml $HOME/.kube/config
-        # Modifie le propriétaire du fichier
         sudo chown $USER:$USER $HOME/.kube/config
-        # Définit les permissions correctes pour le fichier de configuration kubectl
         sudo chmod 600 $HOME/.kube/config
-        # Vérifie si kubectl peut se connecter au cluster
         kubectl get nodes
-      shell: /usr/bin/bash -e {0}
+
+    - name: Check files in terraform/cluster/
+      run: |
+        ls -la terraform/cluster/
 
     - name: Deploy MongoDB
       run: |
-        kubectl apply -f terraform/cluster/mongo-deployment.yaml  # Applique le fichier de déploiement MongoDB à partir du chemin spécifié
+        kubectl apply -f terraform/cluster/mongo-deployment.yaml
 
     - name: Deploy Grafana
       run: |
-        kubectl apply -f terraform/cluster/grafana-deployment.yaml  # Applique le fichier de déploiement Grafana à partir du chemin spécifié
+        kubectl apply -f terraform/cluster/grafana-deployment.yaml
+
+    - name: Verify MongoDB Deployment
+      run: |
+        kubectl get pods -l app=mongodb
+
+    - name: Verify Grafana Deployment
+      run: |
+        kubectl get pods -l app=grafana
 
     - name: Verify Deployment
       run: |
-        kubectl get pods  # Vérifie si les pods MongoDB et Grafana sont bien déployés et en cours d'exécution dans le cluster
+        kubectl get pods
