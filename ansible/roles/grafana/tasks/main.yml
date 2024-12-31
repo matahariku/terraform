@@ -4,27 +4,20 @@
         content: |
           [grafana]
           name=Grafana OSS
-          baseurl={{ grafana_repo_url }}
+          baseurl=https://packages.grafana.com/oss/rpm
           enabled=1
           gpgcheck=1
-          gpgkey={{ grafana_repo_gpgkey }}
+          gpgkey=https://packages.grafana.com/gpg.key
         dest: /etc/yum.repos.d/grafana.repo
 
     - name: Install Grafana
-      dnf:
+      ansible.builtin.dnf:
         name: grafana
         state: present
 
     - name: Enable and start Grafana service
-      systemd:
+      ansible.builtin.systemd:
         name: grafana-server
         state: started
         enabled: true
-
-    - name: Configure Grafana
-      template:
-        src: grafana.ini.j2
-        dest: /etc/grafana/grafana.ini
-      notify:
-        - Restart Grafana
   when: ansible_distribution == "Amazon"
