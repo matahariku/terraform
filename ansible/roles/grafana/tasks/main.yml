@@ -1,23 +1,35 @@
 - block:
-    - name: Add Grafana repository
-      copy:
-        content: |
-          [grafana]
-          name=Grafana OSS
-          baseurl=https://packages.grafana.com/oss/rpm
-          enabled=1
-          gpgcheck=1
-          gpgkey=https://packages.grafana.com/gpg.key
-        dest: /etc/yum.repos.d/grafana.repo
-
-    - name: Install Grafana
-      ansible.builtin.dnf:
-        name: grafana
+    - name: Install Docker on Amazon Linux 2023
+      ansible.builtin.yum:
+        name: docker
         state: present
 
-    - name: Enable and start Grafana service
+    - name: Start Docker Service on Amazon Linux
       ansible.builtin.systemd:
-        name: grafana-server
+        name: docker
         state: started
         enabled: true
+
+    - name: Pull Grafana Docker Image
+      ansible.builtin.docker_image:
+        name: "{{ grafana_docker_image }}"
+        source: pull
+
+    - name: Run Grafana Docker Container
+      ansible.builtin.docker_container:
+        name: "{{ grafana_container_name }}"
+        image: "{{ grafana_docker_image }}"
+        state: started
+        restart_policy: always
+        ports: "{{ grafana_ports }}"
+        volumes:
+          - "{{ grafana_data_volume }}"
+
+    - name: Configure Grafana
+      template:
+        src: grafana.ini.j2
+        dest: /etc/grafana/grafana.ini
+      notify:
+        - Restart Grafana Docker Container
+
   when: ansible_distribution == "Amazon"
