@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mongodb-aws
-  namespace: mongodb-cluster # Espace de noms pour séparer les clusters MongoDB
+  namespace: mongodb-cluster
 spec:
   replicas: 3
   serviceName: "mongodb-aws-service"
@@ -18,14 +18,14 @@ spec:
       - name: mongodb
         image: mongo:6.0
         ports:
-        - containerPort: 27017
+        - containerPort: 27017  # MongoDB tetap di port 27017
         env:
         - name: MONGO_INITDB_ROOT_USERNAME
           value: "root"
         - name: MONGO_INITDB_ROOT_PASSWORD
           value: "devops"
         - name: MONGO_REPLICA_SET
-          value: "rs0" # Nama replica set
+          value: "rs0"
         command:
         - mongod
         - "--replSet"
@@ -35,6 +35,10 @@ spec:
         volumeMounts:
         - name: mongo-data
           mountPath: /data/db
+      - name: mongodb-web
+        image: some-http-server-image  # Gantilah dengan image yang sesuai untuk aplikasi yang berjalan di port 80
+        ports:
+        - containerPort: 80  # Mengubah port aplikasi web menjadi 80
   volumeClaimTemplates:
   - metadata:
       name: mongo-data
@@ -53,6 +57,8 @@ spec:
   ports:
   - port: 27017
     targetPort: 27017
-  clusterIP: None # ClusterIP Aucun n'est utilisé pour que chaque pod soit accessible directement.
+  - port: 80
+    targetPort: 80  # Ganti port 8080 menjadi port 80 di sini
+  clusterIP: None
   selector:
     app: mongodb
