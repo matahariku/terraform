@@ -1,0 +1,48 @@
+name: Deploy MongoDB Cluster (AWS)
+
+on:
+  workflow_dispatch: # trigger manual
+
+jobs:
+  deploy-mongodb-aws:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Deploy MongoDB StatefulSet
+      - name: Deploy MongoDB Cluster on AWS
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_PUBLIC_IP_MONGODB }}
+          username: ${{ secrets.EC2_USER_MONGODB }}
+          key: ${{ secrets.KEY_BLOC4 }}
+          script: |
+            echo "Deploying MongoDB StatefulSet to K3s"
+            kubectl apply -f ~/cafe-nangka/terraform/k3s/mongo-statefulset-aws.yaml
+            echo "Verifying MongoDB Deployment"
+            kubectl get pods -n mongodb-cluster
+            kubectl get svc mongodb-aws-service -n mongodb-cluster
+
+      # 3. Initialize MongoDB Replica Set
+      - name: Initialize MongoDB Replica Set
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_PUBLIC_IP_MONGODB }}
+          username: ${{ secrets.EC2_USER_MONGODB }}
+          key: ${{ secrets.KEY_BLOC4 }}
+          script: |
+            echo "Initializing MongoDB Replica Set"
+            kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval '
+            rs.initiate({
+              _id: "rs0",
+              members: [
+                { _id: 0, host: "mongodb-aws-0.mongodb-aws-service:27017" },
+                { _id: 1, host: "mongodb-aws-1.mongodb-aws-service:27017" },
+                { _id: 2, host: "mongodb-aws-2.mongodb-aws-service:27017" }
+              ]
+            });'
+            echo "Verifying Replica Set Status"
+            kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
