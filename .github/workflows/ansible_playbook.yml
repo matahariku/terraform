@@ -15,8 +15,8 @@ jobs:
       # 2. Install Required Dependencies
       - name: Install Dependencies
         run: |
-          apt-get update
-          apt-get install -y python3 python3-pip python3-venv python3-dev libffi-dev gcc libssl-dev
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip python3-venv python3-dev libffi-dev gcc libssl-dev
 
       # 3. Install Ansible
       - name: Install Ansible
