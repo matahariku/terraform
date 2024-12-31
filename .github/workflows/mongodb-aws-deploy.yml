@@ -1,60 +1,63 @@
-name: Deploy MongoDB Cluster on AWS
+name: Deploy MongoDB and K3s on EC2
 
 on:
-  workflow_dispatch:  # Manual trigger for the workflow
+  workflow_dispatch: # Trigger manual
 
 jobs:
   deploy-mongodb:
-    runs-on: ubuntu-latest  # Use GitHub's default runner
+    runs-on: ubuntu-latest # Menggunakan runner default dari GitHub
 
     steps:
-      # 1. Checkout the repository
+      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
       # 2. Install SSH Client
       - name: Install SSH Client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y openssh-client
+        run: sudo apt-get update && sudo apt-get install -y openssh-client
 
       # 3. Setup SSH Key
-      - name: Setup SSH Key
+      - name: Configure SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
           chmod 600 ~/.ssh/KEY_BLOC4.pem
           ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP_MONGODB }} >> ~/.ssh/known_hosts
 
-      # 4. Deploy MongoDB StatefulSet
-      - name: Deploy MongoDB StatefulSet on AWS
+      # 4. Install K3s on EC2 instance
+      - name: Install K3s on EC2 instance
         run: |
-          echo "Copying MongoDB StatefulSet YAML to EC2 instance"
-          scp -i ~/.ssh/KEY_BLOC4.pem ./k3s/mongo-statefulset-aws.yaml ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }}:/home/${{ secrets.EC2_USER_MONGODB }}/k3s/mongo-statefulset-aws.yaml
-          
-          echo "Deploying MongoDB StatefulSet on Kubernetes"
-          ssh -i ~/.ssh/KEY_BLOC4.pem ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
-          kubectl apply -f /home/${{ secrets.EC2_USER_MONGODB }}/k3s/mongo-statefulset-aws.yaml
-          echo "Verifying MongoDB Pods"
-          kubectl get pods -n mongodb-cluster
-          echo "Verifying MongoDB Service"
-          kubectl get svc -n mongodb-cluster
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
+            curl -sfL https://get.k3s.io | sh -
+            sudo systemctl status k3s
           EOF
 
-      # 5. Initialize MongoDB Replica Set
+      # 5. Deploy MongoDB StatefulSet on K3s cluster
+      - name: Deploy MongoDB StatefulSet on K3s
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
+            echo "Deploying MongoDB StatefulSet on K3s"
+            kubectl apply -f ~/k3s/mongo-statefulset-aws.yaml
+            echo "Verifying MongoDB Pods"
+            kubectl get pods -n mongodb-cluster
+            echo "Verifying MongoDB Service"
+            kubectl get svc -n mongodb-cluster
+          EOF
+
+      # 6. Initialize MongoDB Replica Set
       - name: Initialize MongoDB Replica Set
         run: |
-          ssh -i ~/.ssh/KEY_BLOC4.pem ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
-          echo "Initializing MongoDB Replica Set"
-          kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval '
-          rs.initiate({
-            _id: "rs0",
-            members: [
-              { _id: 0, host: "mongodb-aws-0.mongodb-aws-service:27017" },
-              { _id: 1, host: "mongodb-aws-1.mongodb-aws-service:27017" },
-              { _id: 2, host: "mongodb-aws-2.mongodb-aws-service:27017" }
-            ]
-          });'
-          echo "Verifying Replica Set Status"
-          kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
+            echo "Initializing MongoDB Replica Set"
+            kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval '
+            rs.initiate({
+              _id: "rs0",
+              members: [
+                { _id: 0, host: "mongodb-aws-0.mongodb-aws-service:27017" },
+                { _id: 1, host: "mongodb-aws-1.mongodb-aws-service:27017" },
+                { _id: 2, host: "mongodb-aws-2.mongodb-aws-service:27017" }
+              ]
+            });'
+            echo "Verifying Replica Set Status"
+            kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
           EOF
