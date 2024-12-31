@@ -39,10 +39,10 @@ jobs:
 
       # 5. Debug SSH Connection
       - name: Test SSH Connection to MongoDB
-        run: ssh -i ~/.ssh/KEY_BLOC4.pem ec2-user@34.230.198.148 "echo Connection to MongoDB Successful!"
+        run: ssh -i ~/.ssh/KEY_BLOC4.pem ubuntu@34.230.198.148 "echo Connection to MongoDB Successful!"
 
       - name: Test SSH Connection to Grafana
-        run: ssh -i ~/.ssh/KEY_BLOC4.pem ubuntu@3.219.134.157 "echo Connection to Grafana Successful!"
+        run: ssh -i ~/.ssh/KEY_BLOC4.pem ec2-user@3.219.134.157 "echo Connection to Grafana Successful!"
 
       # 6. Run Ansible Playbook
       - name: Run Ansible Playbook
