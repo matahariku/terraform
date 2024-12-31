@@ -1,3 +1,5 @@
+
+
 - name: Install Required Packages for Docker
   ansible.builtin.apt:
     name: "{{ item }}"
@@ -61,3 +63,5 @@
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: devops
   when: inventory_hostname in groups['mongodb']
+
+
