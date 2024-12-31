@@ -1,3 +1,2 @@
 grafana_version: "9.0.0"
 grafana_repo_url: "https://packages.grafana.com/oss/rpm"
-grafana_repo_gpgkey: "https://packages.grafana.com/gpg.key"
