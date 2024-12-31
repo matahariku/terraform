@@ -1,7 +1,7 @@
 name: Deploy MongoDB Cluster (AWS)
 
 on:
-  workflow_dispatch: # Pemicu manual
+  workflow_dispatch:
 
 jobs:
   deploy-mongodb-aws:
@@ -12,13 +12,13 @@ jobs:
       packages: write
 
     steps:
-      # 1. Checkout repository dengan token
+      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.TOKEN }}
 
-      # 2. Upload YAML file to AWS
+      # 2. Upload MongoDB YAML file to AWS
       - name: Upload MongoDB YAML file to AWS
         uses: garygrossgarten/github-action-scp@v1
         with:
