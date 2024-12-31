@@ -1,11 +1,11 @@
-# Deploy AWS Instances mongodb & grafana
-name: Deploy AWS Instances
+# Deploy AWS Instances for MongoDB and Grafana using Terraform
+name: Deploy AWS Infrastructure
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch: # Manual trigger for the workflow
 
 jobs:
-  terraform_apply:
+  deploy-terraform:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,15 +25,34 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: us-east-1
 
-      # Initialize Terraform
+      # Terraform Initialization
       - name: Initialize Terraform
         run: terraform init
         working-directory: terraform/aws
 
-      # Apply Terraform Plan
-      - name: Apply Terraform Plan
+      # Terraform Lint
+      - name: Check Terraform Formatting
+        run: terraform fmt -check
+        working-directory: terraform/aws
+
+      # Terraform Validation
+      - name: Validate Terraform Configuration
+        run: terraform validate
+        working-directory: terraform/aws
+
+      # Terraform Plan
+      - name: Plan Terraform Changes
+        run: terraform plan
+        working-directory: terraform/aws
+
+      # Apply Terraform Changes
+      - name: Apply Terraform Changes
         run: terraform apply -auto-approve
+        working-directory: terraform/aws
+
+      # Output Terraform Results
+      - name: Output Terraform Results
+        run: terraform output
         working-directory: terraform/aws
