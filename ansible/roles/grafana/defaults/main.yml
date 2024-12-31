@@ -1,2 +1,8 @@
 grafana_version: "9.0.0"
 grafana_repo_url: "https://packages.grafana.com/oss/rpm"
+grafana_repo_gpgkey: "https://packages.grafana.com/gpg.key"
+grafana_docker_image: "grafana/grafana:latest"
+grafana_container_name: "grafana"
+grafana_ports:
+  - "3000:3000"
+grafana_data_volume: "grafana_data:/var/lib/grafana"
