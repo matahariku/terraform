@@ -1,0 +1,16 @@
+name: Test Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: self-hosted
+    labels:
+      - mongo
+
+    steps:
+      - name: Test Runner Connection
+        run: |
+          echo "Runner aktif dan berjalan!"
+          uname -a
