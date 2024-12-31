@@ -1,7 +1,7 @@
 name: Deploy MongoDB Cluster
 
 on:
-  workflow_dispatch: # Ce workflow peut être déclenché manuellement depuis GitHub Actions
+  workflow_dispatch: 
 
 jobs:
   deploy-mongodb:
