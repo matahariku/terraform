@@ -2,14 +2,11 @@ name: Deploy MongoDB Cluster
 
 on:
   workflow_dispatch: # Manual trigger
-  push: 
-    branches:
-      - main
 
 jobs:
   deploy-mongodb:
-    runs-on: self-hosted # Utilise le runner auto-hébergé
-    labels: 
+    runs-on: 
+      - self-hosted # Utilise le runner auto-hébergé
       - mongo # Label correspondant au runner spécifique nommé "mongo"
 
     steps:
