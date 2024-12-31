@@ -1,52 +1,50 @@
 name: Deploy MongoDB Cluster on AWS
 
 on:
-  workflow_dispatch: # Manual trigger for running the workflow
+  workflow_dispatch:  # Manual trigger for the workflow
 
 jobs:
   deploy-mongodb:
-    runs-on: ubuntu-latest # Use the default GitHub runner (can be self-hosted if desired)
+    runs-on: ubuntu-latest  # Use GitHub's default runner
 
     steps:
       # 1. Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
-        # This step checks out the repository to ensure that the necessary files are available to the runner
 
-      # 2. Install SSH client
+      # 2. Install SSH Client
       - name: Install SSH Client
         run: |
           sudo apt-get update
           sudo apt-get install -y openssh-client
-        # Install the SSH client to allow SSH connections to the EC2 instance
 
-      # 3. Setup SSH Key and Configure SSH
+      # 3. Setup SSH Key
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
           chmod 600 ~/.ssh/KEY_BLOC4.pem
           ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP_MONGODB }} >> ~/.ssh/known_hosts
-        # This step sets up the SSH key for connecting to the EC2 instance
-        # The SSH key is stored securely in GitHub Secrets and will be used for authentication
 
       # 4. Deploy MongoDB StatefulSet
       - name: Deploy MongoDB StatefulSet on AWS
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
+          echo "Copying MongoDB StatefulSet YAML to EC2 instance"
+          scp -i ~/.ssh/KEY_BLOC4.pem ./k3s/mongo-statefulset-aws.yaml ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }}:/home/${{ secrets.EC2_USER_MONGODB }}/k3s/mongo-statefulset-aws.yaml
+          
           echo "Deploying MongoDB StatefulSet on Kubernetes"
-          kubectl apply -f ~/k3s/mongo-statefulset-aws.yaml
+          ssh -i ~/.ssh/KEY_BLOC4.pem ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
+          kubectl apply -f /home/${{ secrets.EC2_USER_MONGODB }}/k3s/mongo-statefulset-aws.yaml
           echo "Verifying MongoDB Pods"
           kubectl get pods -n mongodb-cluster
           echo "Verifying MongoDB Service"
           kubectl get svc -n mongodb-cluster
           EOF
-        # This step SSHs into the EC2 instance, deploys the MongoDB StatefulSet YAML, and verifies the deployment
 
       # 5. Initialize MongoDB Replica Set
       - name: Initialize MongoDB Replica Set
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
+          ssh -i ~/.ssh/KEY_BLOC4.pem ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
           echo "Initializing MongoDB Replica Set"
           kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval '
           rs.initiate({
@@ -60,5 +58,3 @@ jobs:
           echo "Verifying Replica Set Status"
           kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
           EOF
-        # This step initializes the MongoDB replica set on the deployed MongoDB StatefulSet
-
