@@ -1,7 +1,7 @@
 name: Deploy MongoDB Cluster (AWS)
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Pemicu manual
 
 jobs:
   deploy-mongodb-aws:
@@ -9,21 +9,23 @@ jobs:
 
     steps:
       # 1. Checkout repository
+      # Mendapatkan repository untuk memastikan file YAML tersedia
       - name: Checkout repository
         uses: actions/checkout@v3
 
       # 2. Upload YAML file to AWS
-      - name: Upload YAML file to AWS
-        uses: appleboy/scp-action@v0.1.8
+      # Mengunggah file YAML ke server AWS
+      - name: Upload MongoDB YAML file to AWS
+        uses: garygrossgarten/github-action-scp@v1
         with:
-          host: ${{ secrets.EC2_PUBLIC_IP_MONGODB }}
-          username: ${{ secrets.EC2_USER_MONGODB }}
-          key: ${{ secrets.KEY_BLOC4 }}
-          source: terraform/k3s/mongo-statefulset-aws.yaml
-          target: ~/cafe-nangka/terraform/k3s/mongo-statefulset-aws.yaml
+          local: terraform/k3s/mongo-statefulset-aws.yaml
+          remote: ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }}:~/cafe-nangka/terraform/k3s/mongo-statefulset-aws.yaml
+          port: 22
+          privateKey: ${{ secrets.KEY_BLOC4 }}
 
-      # 3. Start K3s and Configure kubectl
-      - name: Start K3s and Configure kubectl
+      # 3. Install K3s and Configure kubectl
+      # Memastikan K3s terinstal dan berjalan di server AWS
+      - name: Install K3s and Configure kubectl
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.EC2_PUBLIC_IP_MONGODB }}
@@ -31,7 +33,7 @@ jobs:
           key: ${{ secrets.KEY_BLOC4 }}
           script: |
             if ! systemctl is-active --quiet k3s; then
-              echo "Starting K3s..."
+              echo "Installing K3s..."
               curl -sfL https://get.k3s.io | sh -
             else
               echo "K3s is already running"
@@ -40,9 +42,12 @@ jobs:
             sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
             sudo chown $USER:$USER ~/.kube/config
             export KUBECONFIG=~/.kube/config
+            echo "Verifying K3s installation..."
             kubectl version --client
+            kubectl create namespace mongodb-cluster || echo "Namespace already exists"
 
       # 4. Deploy MongoDB StatefulSet
+      # Melakukan deployment StatefulSet MongoDB
       - name: Deploy MongoDB StatefulSet
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -50,8 +55,30 @@ jobs:
           username: ${{ secrets.EC2_USER_MONGODB }}
           key: ${{ secrets.KEY_BLOC4 }}
           script: |
-            echo "Deploying MongoDB StatefulSet to K3s"
+            echo "Deploying MongoDB StatefulSet to K3s..."
             kubectl apply -f ~/cafe-nangka/terraform/k3s/mongo-statefulset-aws.yaml
-            echo "Verifying MongoDB Deployment"
+            echo "Verifying MongoDB Deployment..."
             kubectl get pods -n mongodb-cluster
             kubectl get svc mongodb-aws-service -n mongodb-cluster
+
+      # 5. Initialize MongoDB Replica Set
+      # Menginisialisasi Replica Set MongoDB untuk sinkronisasi antar pod
+      - name: Initialize MongoDB Replica Set
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_PUBLIC_IP_MONGODB }}
+          username: ${{ secrets.EC2_USER_MONGODB }}
+          key: ${{ secrets.KEY_BLOC4 }}
+          script: |
+            echo "Initializing MongoDB Replica Set..."
+            kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval '
+            rs.initiate({
+              _id: "rs0",
+              members: [
+                { _id: 0, host: "mongodb-aws-0.mongodb-aws-service:27017" },
+                { _id: 1, host: "mongodb-aws-1.mongodb-aws-service:27017" },
+                { _id: 2, host: "mongodb-aws-2.mongodb-aws-service:27017" }
+              ]
+            });'
+            echo "Verifying Replica Set Status..."
+            kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
