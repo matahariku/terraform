@@ -5,11 +5,9 @@ galaxy_info:
   license: "MIT"
   min_ansible_version: "2.9"
   platforms:
-    - name: Amazon
-      versions:
-        - 2
     - name: Ubuntu
       versions:
         - focal
+        - jammy
 
 dependencies: []
