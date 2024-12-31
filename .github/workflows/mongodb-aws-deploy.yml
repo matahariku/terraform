@@ -2,10 +2,9 @@ name: Deploy MongoDB Cluster
 
 on:
   workflow_dispatch: # Manual trigger
-  push: # Automatic trigger
+  push: 
     branches:
       - main
-
 
 jobs:
   deploy-mongodb:
