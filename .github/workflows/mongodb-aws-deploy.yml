@@ -41,6 +41,7 @@ jobs:
           kubectl get svc -n mongodb-cluster
           EOF
 
+
       # 6. Initialize MongoDB Replica Set
       - name: Initialize MongoDB Replica Set
         run: |
