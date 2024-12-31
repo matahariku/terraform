@@ -19,10 +19,15 @@ jobs:
           sudo apt-get install -y python3 python3-pip python3-venv python3-dev libffi-dev gcc libssl-dev
 
       # 3. Install Ansible
-      - name: Install Ansible
-        run: |
-          pip3 install ansible
-          ansible --version
+      #- name: Install Ansible
+      # run: |
+      # pip3 install ansible
+      # ansible --version
+      - name: "install python for Ansible."
+          apt:
+            name: python3
+            state: latest
+            update_cache: yes
 
       # 4. Set Up SSH
       - name: Configure SSH
