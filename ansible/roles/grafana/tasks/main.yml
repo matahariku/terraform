@@ -1,27 +1,17 @@
 - block:
-    - name: Ensure /usr/share/keyrings directory exists
-      file:
-        path: /usr/share/keyrings
-        state: directory
-
-    - name: Add Grafana GPG key directly to keyring
-      get_url:
-        url: https://packages.grafana.com/gpg.key
-        dest: /usr/share/keyrings/grafana-archive-keyring.gpg
-        mode: '0644'
-
-    - name: Add Grafana APT repository
+    - name: Add Grafana repository
       copy:
         content: |
-          deb [signed-by=/usr/share/keyrings/grafana-archive-keyring.gpg] https://packages.grafana.com/oss/deb stable main
-        dest: /etc/apt/sources.list.d/grafana.list
-
-    - name: Update apt repository cache
-      apt:
-        update_cache: yes
+          [grafana]
+          name=Grafana OSS
+          baseurl={{ grafana_repo_url }}
+          enabled=1
+          gpgcheck=1
+          gpgkey={{ grafana_repo_gpgkey }}
+        dest: /etc/yum.repos.d/grafana.repo
 
     - name: Install Grafana
-      apt:
+      dnf:
         name: grafana
         state: present
 
@@ -37,4 +27,4 @@
         dest: /etc/grafana/grafana.ini
       notify:
         - Restart Grafana
-  when: ansible_distribution == "Ubuntu"
+  when: ansible_distribution == "Amazon"
