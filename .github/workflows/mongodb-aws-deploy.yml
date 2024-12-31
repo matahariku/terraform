@@ -1,40 +1,54 @@
-name: Deploy MongoDB Cluster (AWS)
+name: Deploy MongoDB Cluster
 
 on:
-  workflow_dispatch: # Pemicu manual
+  workflow_dispatch: # Ce workflow peut être déclenché manuellement depuis GitHub Actions
 
 jobs:
-  deploy-mongodb-aws:
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      packages: write
+  deploy-mongodb:
+    runs-on: self-hosted # Utilise le runner auto-hébergé
+    labels: 
+      - mongo # Label correspondant au runner spécifique nommé "mongo"
 
     steps:
-      # 1. Checkout repository
-      - name: Checkout repository
+      # 1. Récupérer les fichiers du dépôt GitHub
+      - name: Récupérer le dépôt
         uses: actions/checkout@v3
+        # Cette étape télécharge tout le contenu du dépôt pour que le runner ait accès aux fichiers nécessaires
 
-      # 2. Setup SSH Key
-      - name: Setup SSH Key
+      # 2. Installer l'outil CLI Kubernetes (kubectl)
+      - name: Installer kubectl
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
-          chmod 600 ~/.ssh/KEY_BLOC4.pem
+          # Télécharge et installe la version stable de kubectl
+          sudo curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+          kubectl version --client
+        # Permet d'interagir avec le cluster K3s via la ligne de commande
 
-      # 3. Copy MongoDB YAML file to AWS
-      - name: Copy MongoDB YAML file
+      # 3. Déployer le StatefulSet MongoDB dans le cluster K3s
+      - name: Déployer le StatefulSet MongoDB
         run: |
-          scp -o StrictHostKeyChecking=no k3s/mongo-statefulset-aws.yaml ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }}:~/k3s/mongo-statefulset-aws.yaml
-
-      # 4. Deploy MongoDB StatefulSet
-      - name: Deploy MongoDB StatefulSet
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << EOF
-          echo "Deploying MongoDB StatefulSet to K3s..."
-          kubectl apply -f ~/k3s/mongo-statefulset-aws.yaml
-          echo "Verifying MongoDB Deployment..."
+          echo "Déploiement du StatefulSet MongoDB sur K3s"
+          # Applique la configuration définie dans le fichier YAML
+          kubectl apply -f k3s/mongo-statefulset-aws.yaml
+          echo "Vérification du déploiement MongoDB"
+          # Affiche les pods et services pour confirmer que tout fonctionne correctement
           kubectl get pods -n mongodb-cluster
-          kubectl get svc mongodb-aws-service -n mongodb-cluster
-          EOF
+          kubectl get svc -n mongodb-cluster
+
+      # 4. Initialiser le Replica Set MongoDB
+      - name: Initialiser le Replica Set MongoDB
+        run: |
+          echo "Initialisation du Replica Set MongoDB"
+          # Exécute la commande MongoDB pour initialiser le replica set
+          kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval '
+          rs.initiate({
+            _id: "rs0",
+            members: [
+              { _id: 0, host: "mongodb-aws-0.mongodb-aws-service:27017" },
+              { _id: 1, host: "mongodb-aws-1.mongodb-aws-service:27017" },
+              { _id: 2, host: "mongodb-aws-2.mongodb-aws-service:27017" }
+            ]
+          });'
+          echo "Vérification de l'état du Replica Set"
+          # Vérifie l'état actuel du Replica Set pour s'assurer qu'il est actif et synchronisé
+          kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
