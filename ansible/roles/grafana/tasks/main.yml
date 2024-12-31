@@ -20,4 +20,4 @@
         name: grafana-server
         state: started
         enabled: true
-  when: ansible_distribution == "Amazon"  # This ensures the tasks only run on Amazon Linux
+  when: ansible_distribution == "Amazon"
