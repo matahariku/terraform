@@ -20,8 +20,8 @@ jobs:
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
+          chmod 600 ~/.ssh/KEY_BLOC4.pem
 
       # 3. Copy MongoDB YAML file to AWS
       - name: Copy MongoDB YAML file
