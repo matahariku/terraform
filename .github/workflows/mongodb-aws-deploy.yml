@@ -27,7 +27,7 @@ jobs:
       # 4. Install K3s on EC2 instance
       - name: Install K3s on EC2 instance
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
             curl -sfL https://get.k3s.io | sh -
             sudo systemctl status k3s
           EOF
@@ -47,7 +47,7 @@ jobs:
       # 6. Initialize MongoDB Replica Set
       - name: Initialize MongoDB Replica Set
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
             echo "Initializing MongoDB Replica Set"
             kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval '
             rs.initiate({
