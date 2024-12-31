@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-web
+  namespace: mongodb-cluster
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mongodb-web
+  template:
+    metadata:
+      labels:
+        app: mongodb-web
+    spec:
+      containers:
+      - name: mongodb-web
+        image: some-http-server-image  # Ganti dengan image aplikasi web
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-web-service
+  namespace: mongodb-cluster
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: mongodb-web
