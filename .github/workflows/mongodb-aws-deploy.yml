@@ -1,67 +1,57 @@
 name: Deploy MongoDB Cluster (AWS)
 
 on:
-  workflow_dispatch: # Déclenchement manuel du workflow
+  workflow_dispatch:
 
 jobs:
   deploy-mongodb-aws:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Récupérer le dépôt
-      # Cette étape utilise l'action officielle GitHub pour récupérer le code du dépôt actuel
-      - name: Récupérer le dépôt
+      # 1. Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Installer kubectl et configurer le namespace Kubernetes
-      # Cette étape installe kubectl sur le serveur AWS et crée un namespace pour MongoDB
-      - name: Installer kubectl et configurer le namespace
-        uses: appleboy/ssh-action@v0.1.8
+      # 2. Upload YAML file to AWS
+      - name: Upload YAML file to AWS
+        uses: appleboy/scp-action@v0.1.8
         with:
-          host: ${{ secrets.EC2_PUBLIC_IP_MONGODB }} # IP publique de l'instance AWS
-          username: ${{ secrets.EC2_USER_MONGODB }} # Nom d'utilisateur de l'instance AWS
-          key: ${{ secrets.KEY_BLOC4 }} # Clé privée pour accéder à l'instance
-          script: |
-            echo "Installer kubectl..."
-            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-            chmod +x kubectl
-            sudo mv kubectl /usr/local/bin/
-            echo "Créer le namespace Kubernetes pour MongoDB"
-            kubectl create namespace mongodb-cluster || echo "Le namespace existe déjà"
+          host: ${{ secrets.EC2_PUBLIC_IP_MONGODB }}
+          username: ${{ secrets.EC2_USER_MONGODB }}
+          key: ${{ secrets.KEY_BLOC4 }}
+          source: terraform/k3s/mongo-statefulset-aws.yaml
+          target: ~/cafe-nangka/terraform/k3s/mongo-statefulset-aws.yaml
 
-      # 3. Déployer le StatefulSet MongoDB
-      # Cette étape applique le fichier YAML du StatefulSet sur le cluster Kubernetes
-      - name: Déployer le StatefulSet MongoDB sur AWS
+      # 3. Start K3s and Configure kubectl
+      - name: Start K3s and Configure kubectl
         uses: appleboy/ssh-action@v0.1.8
         with:
-          host: ${{ secrets.EC2_PUBLIC_IP_MONGODB }} # IP publique de l'instance AWS
-          username: ${{ secrets.EC2_USER_MONGODB }} # Nom d'utilisateur de l'instance AWS
-          key: ${{ secrets.KEY_BLOC4 }} # Clé privée pour accéder à l'instance
+          host: ${{ secrets.EC2_PUBLIC_IP_MONGODB }}
+          username: ${{ secrets.EC2_USER_MONGODB }}
+          key: ${{ secrets.KEY_BLOC4 }}
           script: |
-            echo "Déployer le StatefulSet MongoDB sur K3s"
+            if ! systemctl is-active --quiet k3s; then
+              echo "Starting K3s..."
+              curl -sfL https://get.k3s.io | sh -
+            else
+              echo "K3s is already running"
+            fi
+            mkdir -p ~/.kube
+            sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+            sudo chown $USER:$USER ~/.kube/config
+            export KUBECONFIG=~/.kube/config
+            kubectl version --client
+
+      # 4. Deploy MongoDB StatefulSet
+      - name: Deploy MongoDB StatefulSet
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_PUBLIC_IP_MONGODB }}
+          username: ${{ secrets.EC2_USER_MONGODB }}
+          key: ${{ secrets.KEY_BLOC4 }}
+          script: |
+            echo "Deploying MongoDB StatefulSet to K3s"
             kubectl apply -f ~/cafe-nangka/terraform/k3s/mongo-statefulset-aws.yaml
-            echo "Vérification du déploiement de MongoDB"
+            echo "Verifying MongoDB Deployment"
             kubectl get pods -n mongodb-cluster
             kubectl get svc mongodb-aws-service -n mongodb-cluster
-
-      # 4. Initialiser le Replica Set MongoDB
-      # Cette étape configure le Replica Set MongoDB pour synchroniser les pods
-      - name: Initialiser le Replica Set MongoDB
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.EC2_PUBLIC_IP_MONGODB }} # IP publique de l'instance AWS
-          username: ${{ secrets.EC2_USER_MONGODB }} # Nom d'utilisateur de l'instance AWS
-          key: ${{ secrets.KEY_BLOC4 }} # Clé privée pour accéder à l'instance
-          script: |
-            echo "Initialisation du Replica Set MongoDB"
-            kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval '
-            rs.initiate({
-              _id: "rs0",
-              members: [
-                { _id: 0, host: "mongodb-aws-0.mongodb-aws-service:27017" },
-                { _id: 1, host: "mongodb-aws-1.mongodb-aws-service:27017" },
-                { _id: 2, host: "mongodb-aws-2.mongodb-aws-service:27017" }
-              ]
-            });'
-            echo "Vérification de l'état du Replica Set"
-            kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
