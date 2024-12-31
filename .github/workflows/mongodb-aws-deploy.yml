@@ -1,46 +1,51 @@
 name: Deploy MongoDB Cluster on AWS
 
 on:
-  workflow_dispatch: # Manual trigger untuk memulai workflow
+  workflow_dispatch: # Déclenchement manuel pour exécuter ce workflow
 
 jobs:
   deploy-mongodb:
-    runs-on: ubuntu-latest # Menggunakan runner default GitHub
+    runs-on: ubuntu-latest # Utilisation du runner par défaut GitHub
 
     steps:
-      # 1. Checkout repository
+      # Étape 1 : Récupérer les fichiers du dépôt GitHub
       - name: Checkout repository
         uses: actions/checkout@v3
+        # Cette étape permet de télécharger tout le contenu du dépôt
+        # pour rendre les fichiers accessibles aux étapes suivantes.
 
-      # 2. Install SSH Client
+      # Étape 2 : Installer le client SSH
       - name: Install SSH Client
         run: sudo apt-get update && sudo apt-get install -y openssh-client
+        # Installe le client SSH nécessaire pour établir une connexion sécurisée au serveur AWS.
 
-      # 3. Setup SSH Key
+      # Étape 3 : Configurer la clé SSH
       - name: Configure SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/KEY_BLOC4.pem
           chmod 600 ~/.ssh/KEY_BLOC4.pem
           ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP_MONGODB }} >> ~/.ssh/known_hosts
+        # Configure la clé SSH pour se connecter au serveur distant AWS.
 
-      # 4. Deploy MongoDB Cluster
+      # Étape 4 : Déployer le StatefulSet MongoDB
       - name: Deploy MongoDB StatefulSet
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
-          echo "Deploying MongoDB StatefulSet on Kubernetes"
+          echo "Déploiement du StatefulSet MongoDB sur Kubernetes"
           kubectl apply -f ~/k3s/mongo-statefulset-aws.yaml
-          echo "Verifying MongoDB Pods"
+          echo "Vérification des pods MongoDB"
           kubectl get pods -n mongodb-cluster
-          echo "Verifying MongoDB Service"
+          echo "Vérification du service MongoDB"
           kubectl get svc -n mongodb-cluster
           EOF
+        # Exécute les commandes nécessaires pour déployer MongoDB dans le cluster Kubernetes.
 
-      # 5. Initialize MongoDB Replica Set
+      # Étape 5 : Initialiser le Replica Set MongoDB
       - name: Initialize MongoDB Replica Set
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
-          echo "Initializing MongoDB Replica Set"
+          echo "Initialisation du Replica Set MongoDB"
           kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval '
           rs.initiate({
             _id: "rs0",
@@ -50,6 +55,7 @@ jobs:
               { _id: 2, host: "mongodb-aws-2.mongodb-aws-service:27017" }
             ]
           });'
-          echo "Verifying Replica Set Status"
+          echo "Vérification de l'état du Replica Set"
           kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
           EOF
+        # Initialise le Replica Set de MongoDB et vérifie son état.
