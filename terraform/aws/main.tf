@@ -94,6 +94,22 @@ resource "aws_security_group" "sg_mongodb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+# Allow HTTP
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow HTTPS
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -125,6 +141,22 @@ resource "aws_security_group" "sg_grafana" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+# Allow HTTP
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow HTTPS
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -140,9 +172,9 @@ resource "aws_security_group" "sg_grafana" {
 
 # MongoDB Instance
 resource "aws_instance" "mongodb" {
-  ami                    = "ami-01816d07b1128cd2d"
+  ami                    = "ami-0e2c8caa4b6378d8c"
   instance_type          = "t3.micro"
-  subnet_id              = aws_subnet.cafe_private.id
+  subnet_id              = aws_subnet.cafe_public.id
   vpc_security_group_ids = [aws_security_group.sg_mongodb.id]
   key_name               = var.key_pair_name
 
@@ -154,7 +186,7 @@ resource "aws_instance" "mongodb" {
 
 # Grafana Instance
 resource "aws_instance" "grafana" {
-  ami                    = "ami-0e2c8caa4b6378d8c"
+  ami                    = "ami-01816d07b1128cd2d"
   instance_type          = "t3.micro"
   subnet_id              = aws_subnet.cafe_public.id
   vpc_security_group_ids = [aws_security_group.sg_grafana.id]
