@@ -7,7 +7,7 @@ jobs:
   test:
     runs-on: 
       - self-hosted
-      - mongo
+      - debian
 
     steps:
       - name: Test Runner Connection
