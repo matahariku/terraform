@@ -35,7 +35,7 @@ jobs:
       # 5. Deploy MongoDB StatefulSet on K3s cluster
       - name: Deploy MongoDB StatefulSet on K3s
         run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
             echo "Deploying MongoDB StatefulSet on K3s"
             kubectl apply -f ~/k3s/mongo-statefulset-aws.yaml
             echo "Verifying MongoDB Pods"
