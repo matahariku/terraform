@@ -16,25 +16,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Upload MongoDB YAML file to AWS
-      - name: Upload MongoDB YAML file to AWS
-        uses: garygrossgarten/github-action-scp@v1.1.0
-        with:
-          local: k3s/mongo-statefulset-aws.yaml # Path baru ke file YAML
-          remote: ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }}:~/k3s/mongo-statefulset-aws.yaml
-          port: 22
-          privateKey: ${{ secrets.KEY_BLOC4 }}
+      # 2. Setup SSH Key
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.KEY_BLOC4 }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      # 3. Deploy MongoDB StatefulSet
+      # 3. Copy MongoDB YAML file to AWS
+      - name: Copy MongoDB YAML file
+        run: |
+          scp -o StrictHostKeyChecking=no k3s/mongo-statefulset-aws.yaml ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }}:~/k3s/mongo-statefulset-aws.yaml
+
+      # 4. Deploy MongoDB StatefulSet
       - name: Deploy MongoDB StatefulSet
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.EC2_PUBLIC_IP_MONGODB }}
-          username: ${{ secrets.EC2_USER_MONGODB }}
-          key: ${{ secrets.KEY_BLOC4 }}
-          script: |
-            echo "Deploying MongoDB StatefulSet to K3s..."
-            kubectl apply -f ~/k3s/mongo-statefulset-aws.yaml
-            echo "Verifying MongoDB Deployment..."
-            kubectl get pods -n mongodb-cluster
-            kubectl get svc mongodb-aws-service -n mongodb-cluster
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << EOF
+          echo "Deploying MongoDB StatefulSet to K3s..."
+          kubectl apply -f ~/k3s/mongo-statefulset-aws.yaml
+          echo "Verifying MongoDB Deployment..."
+          kubectl get pods -n mongodb-cluster
+          kubectl get svc mongodb-aws-service -n mongodb-cluster
+          EOF
