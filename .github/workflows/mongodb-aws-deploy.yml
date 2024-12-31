@@ -9,7 +9,7 @@ jobs:
 
     steps:
       # 1. Checkout repository
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
       # 2. Install SSH Client
@@ -24,15 +24,21 @@ jobs:
           chmod 600 ~/.ssh/KEY_BLOC4.pem
           ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP_MONGODB }} >> ~/.ssh/known_hosts
 
-      # 4. Copy MongoDB StatefulSet YAML to EC2 instance
-      - name: Copy MongoDB StatefulSet YAML to EC2 instance
+      # 4. Copy k3s Folder to EC2 Instance
+      - name: Copy k3s Folder to EC2 Instance
         run: |
-          scp -i ~/.ssh/KEY_BLOC4.pem ./k3s/mongo-statefulset-aws.yaml ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }}:/home/${{ secrets.EC2_USER_MONGODB }}/k3s/mongo-statefulset-aws.yaml
+          scp -i ~/.ssh/KEY_BLOC4.pem -r ./k3s ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }}:/home/${{ secrets.EC2_USER_MONGODB }}/
 
-      # 5. Deploy MongoDB StatefulSet on EC2 instance
+      # 5. Deploy MongoDB StatefulSet on EC2 Instance
       - name: Deploy MongoDB StatefulSet on Kubernetes
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
+          set -e
+          echo "Checking K3s Status"
+          if ! kubectl cluster-info; then
+            echo "K3s is not running. Exiting."
+            exit 1
+          fi
           echo "Deploying MongoDB StatefulSet on K3s"
           kubectl apply -f /home/${{ secrets.EC2_USER_MONGODB }}/k3s/mongo-statefulset-aws.yaml
           echo "Verifying MongoDB Pods"
@@ -45,6 +51,7 @@ jobs:
       - name: Initialize MongoDB Replica Set
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }} << 'EOF'
+          set -e
           echo "Initializing MongoDB Replica Set"
           kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval '
           rs.initiate({
