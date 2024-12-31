@@ -1,6 +1,30 @@
+- name: Install Required Packages for Docker
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - software-properties-common
+  when: inventory_hostname in groups['mongodb']
+
+- name: Add Docker GPG Key
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  when: inventory_hostname in groups['mongodb']
+
+- name: Add Docker Repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+  when: inventory_hostname in groups['mongodb']
+
 - name: Install Docker
-  ansible.builtin.yum:
-    name: docker
+  ansible.builtin.apt:
+    name: docker-ce
     state: present
   when: inventory_hostname in groups['mongodb']
 
