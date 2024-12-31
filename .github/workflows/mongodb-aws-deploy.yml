@@ -1,7 +1,7 @@
 name: Deploy MongoDB Cluster (AWS)
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Pemicu manual
 
 jobs:
   deploy-mongodb-aws:
@@ -15,15 +15,13 @@ jobs:
       # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.TOKEN }}
 
       # 2. Upload MongoDB YAML file to AWS
       - name: Upload MongoDB YAML file to AWS
-        uses: garygrossgarten/github-action-scp@v1
+        uses: garygrossgarten/github-action-scp@v1.1.0
         with:
-          local: terraform/k3s/mongo-statefulset-aws.yaml
-          remote: ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }}:~/cafe-nangka/terraform/k3s/mongo-statefulset-aws.yaml
+          local: k3s/mongo-statefulset-aws.yaml # Path baru ke file YAML
+          remote: ${{ secrets.EC2_USER_MONGODB }}@${{ secrets.EC2_PUBLIC_IP_MONGODB }}:~/k3s/mongo-statefulset-aws.yaml
           port: 22
           privateKey: ${{ secrets.KEY_BLOC4 }}
 
@@ -36,7 +34,7 @@ jobs:
           key: ${{ secrets.KEY_BLOC4 }}
           script: |
             echo "Deploying MongoDB StatefulSet to K3s..."
-            kubectl apply -f ~/cafe-nangka/terraform/k3s/mongo-statefulset-aws.yaml
+            kubectl apply -f ~/k3s/mongo-statefulset-aws.yaml
             echo "Verifying MongoDB Deployment..."
             kubectl get pods -n mongodb-cluster
             kubectl get svc mongodb-aws-service -n mongodb-cluster
