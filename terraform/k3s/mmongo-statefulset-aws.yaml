@@ -1,10 +1,11 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mongodb
+  name: mongodb-aws
+  namespace: mongodb-cluster # Espace de noms pour séparer les clusters MongoDB
 spec:
   replicas: 3
-  serviceName: "mongodb-service"
+  serviceName: "mongodb-aws-service"
   selector:
     matchLabels:
       app: mongodb
@@ -46,11 +47,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongodb-service
+  name: mongodb-aws-service
+  namespace: mongodb-cluster
 spec:
   ports:
   - port: 27017
     targetPort: 27017
-  clusterIP: None # ClusterIP None digunakan untuk StatefulSet agar setiap pod dapat diakses
+  clusterIP: None # ClusterIP Aucun n'est utilisé pour que chaque pod soit accessible directement.
   selector:
     app: mongodb
