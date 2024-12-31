@@ -5,9 +5,7 @@ on:
 
 jobs:
   test:
-    runs-on: self-hosted
-    labels:
-      - mongo
+    runs-on: mongo
 
     steps:
       - name: Test Runner Connection
