@@ -47,4 +47,4 @@ jobs:
       # 6. Run Ansible Playbook
       - name: Run Ansible Playbook
         run: |
-          ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml -vvv
+          ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml 
