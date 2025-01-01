@@ -1,9 +1,3 @@
-- name: Remove Grafana GPG key if present
-  ansible.builtin.apt_key:
-    name: 963FA27710458545
-    state: absent
-  ignore_errors: yes
-
 - name: Install Required Dependencies for Docker
   ansible.builtin.apt:
     name:
