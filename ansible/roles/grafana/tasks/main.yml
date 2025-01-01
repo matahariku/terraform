@@ -1,39 +1,41 @@
-- name: Install Docker
+- name: Install Grafana Dependencies
   ansible.builtin.yum:
-    name: docker
+    name:
+      - fontconfig
+      - libfontconfig
+      - libxslt
     state: present
-  when: inventory_hostname in groups['mongodb']
+  when: ansible_distribution == "Amazon"
 
-- name: Start Docker Service
-  ansible.builtin.service:
-    name: docker
+- name: Add Grafana repository
+  ansible.builtin.copy:
+    content: |
+      [grafana]
+      name=Grafana OSS
+      baseurl=https://packages.grafana.com/oss/rpm
+      enabled=1
+      gpgcheck=1
+      gpgkey=https://packages.grafana.com/gpg.key
+    dest: /etc/yum.repos.d/grafana.repo
+  when: ansible_distribution == "Amazon"
+
+- name: Install Grafana
+  ansible.builtin.dnf:
+    name: grafana
+    state: present
+  when: ansible_distribution == "Amazon"
+
+- name: Enable and start Grafana service
+  ansible.builtin.systemd:
+    name: grafana-server
     state: started
-    enabled: yes
-  when: inventory_hostname in groups['mongodb']
+    enabled: true
+  when: ansible_distribution == "Amazon"
 
-- name: Pull MongoDB Docker Image
-  ansible.builtin.docker_image:
-    name: "{{ docker_image }}"
-    source: pull
-  when: inventory_hostname in groups['mongodb']
-
-- name: Stop Existing MongoDB Container (if any)
-  ansible.builtin.shell: |
-    docker stop mongodb || true
-    docker rm mongodb || true
-  when: inventory_hostname in groups['mongodb']
-
-- name: Run MongoDB Docker Container
-  ansible.builtin.docker_container:
-    name: "{{ docker_container_name }}"
-    image: "{{ docker_image }}"
-    state: started
-    restart_policy: always
-    ports:
-      - "{{ docker_port }}:27017"
-    volumes:
-      - "mongodb_data:/data/db"
-    env:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: devops
-  when: inventory_hostname in groups['mongodb']
+- name: Configure Grafana
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+  notify:
+    - Restart Grafana
+  when: ansible_distribution == "Amazon"
