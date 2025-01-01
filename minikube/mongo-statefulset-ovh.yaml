@@ -4,7 +4,7 @@ metadata:
   name: mongo-ovh
   namespace: ovh-namespace
 spec:
-  replicas: 1  # Kurangi replika untuk meminimalkan penggunaan sumber daya
+  replicas: 3
   selector:
     matchLabels:
       app: mongo
@@ -34,7 +34,7 @@ spec:
         - "0.0.0.0"
         resources:
           requests:
-            memory: "256Mi"  # Dikurangi untuk hemat ruang
+            memory: "256Mi"  
             cpu: "250m"
           limits:
             memory: "512Mi"
@@ -45,5 +45,5 @@ spec:
       volumes:
       - name: mongo-data
         hostPath:
-          path: /var/lib/docker/mongo-ovh  # Lokasi direktori dengan ruang kosong besar
+          path: /var/lib/docker/mongo-ovh  
           type: DirectoryOrCreate
