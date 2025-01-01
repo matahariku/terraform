@@ -8,54 +8,38 @@ jobs:
     name: Deploy MongoDB on AWS
     runs-on: ubuntu-latest
     steps:
-      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Setup K3s and Kubectl
-      - name: Setup K3s and Kubectl on AWS
+      - name: Setup K3s on AWS
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y apt-transport-https curl
           curl -sfL https://get.k3s.io | sh -
+          echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> ~/.bashrc
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          sudo curl -LO "https://dl.k8s.io/release/v1.26.0/bin/linux/amd64/kubectl"
-          sudo install kubectl /usr/local/bin/kubectl
+          kubectl get nodes
 
-      # 3. Start K3s cluster
-      - name: Start K3s cluster
+      - name: Create namespace and deploy MongoDB
         run: |
+          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
           kubectl create namespace aws-namespace || true
-
-      # 4. Deploy MongoDB StatefulSet on AWS
-      - name: Deploy MongoDB StatefulSet
-        run: |
           kubectl apply -f ./k3s/mongo-statefulset-aws.yaml -n aws-namespace
 
   deploy-ovh-cluster:
     name: Deploy MongoDB on OVH
     runs-on: self-hosted
     steps:
-      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Setup K3s and Kubectl
-      - name: Setup K3s and Kubectl on OVH
+      - name: Setup K3s on OVH
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y apt-transport-https curl
           curl -sfL https://get.k3s.io | sh -
+          echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> ~/.bashrc
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          sudo curl -LO "https://dl.k8s.io/release/v1.26.0/bin/linux/amd64/kubectl"
-          sudo install kubectl /usr/local/bin/kubectl
+          kubectl get nodes
 
-      # 3. Start K3s cluster
-      - name: Start K3s cluster
+      - name: Create namespace and deploy MongoDB
         run: |
+          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
           kubectl create namespace ovh-namespace || true
-
-      # 4. Deploy MongoDB StatefulSet on OVH
-      - name: Deploy MongoDB StatefulSet
-        run: |
           kubectl apply -f ./k3s/mongo-statefulset-ovh.yaml -n ovh-namespace
