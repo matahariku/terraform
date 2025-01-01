@@ -1,1 +1,39 @@
+- name: Install Docker
+  ansible.builtin.yum:
+    name: docker
+    state: present
+  when: inventory_hostname in groups['mongodb']
 
+- name: Start Docker Service
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: yes
+  when: inventory_hostname in groups['mongodb']
+
+- name: Pull MongoDB Docker Image
+  ansible.builtin.docker_image:
+    name: "{{ docker_image }}"
+    source: pull
+  when: inventory_hostname in groups['mongodb']
+
+- name: Stop Existing MongoDB Container (if any)
+  ansible.builtin.shell: |
+    docker stop mongodb || true
+    docker rm mongodb || true
+  when: inventory_hostname in groups['mongodb']
+
+- name: Run MongoDB Docker Container
+  ansible.builtin.docker_container:
+    name: "{{ docker_container_name }}"
+    image: "{{ docker_image }}"
+    state: started
+    restart_policy: always
+    ports:
+      - "{{ docker_port }}:27017"
+    volumes:
+      - "mongodb_data:/data/db"
+    env:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: devops
+  when: inventory_hostname in groups['mongodb']
