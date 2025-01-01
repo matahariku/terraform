@@ -1,14 +1,14 @@
 name: Deploy MongoDB Cluster
 
 on:
-  workflow_dispatch: # Untuk trigger manual
+  workflow_dispatch: # Trigger manual untuk memulai workflow
 
 jobs:
   deploy-mongodb:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
+      # 1. Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
@@ -20,28 +20,41 @@ jobs:
           sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
           sudo chmod 600 ~/.kube/config
 
-      # 3. Deploy MongoDB StatefulSet
+      # 3. Create Namespace
+      - name: Create Namespace
+        run: |
+          kubectl create namespace mongodb-cluster || echo "Namespace already exists"
+
+      # 4. Create Kubernetes Secrets for MongoDB
+      - name: Create Kubernetes Secrets for MongoDB
+        run: |
+          kubectl create secret generic mongo-secrets \
+            --from-literal=username=${{ secrets.MONGO_USERNAME }} \
+            --from-literal=password=${{ secrets.MONGO_PASSWORD }} \
+            -n mongodb-cluster
+
+      # 5. Deploy MongoDB StatefulSet
       - name: Deploy MongoDB StatefulSet
         run: |
-          echo "Deploying MongoDB StatefulSet"
           kubectl apply -f ./k3s/mongo-statefulset-aws.yaml
-          echo "Verifying MongoDB Pods"
           kubectl get pods -n mongodb-cluster
-          echo "Verifying MongoDB Service"
           kubectl get svc -n mongodb-cluster
 
-      # 4. Initialize Replica Set
+      # 6. Wait for MongoDB Pods to be Ready
+      - name: Wait for MongoDB Pods
+        run: |
+          kubectl wait --for=condition=ready pod -l app=mongodb-worker -n mongodb-cluster --timeout=300s
+
+      # 7. Initialize MongoDB Replica Set
       - name: Initialize MongoDB Replica Set
         run: |
-          echo "Initializing MongoDB Replica Set"
-          kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval '
+          kubectl exec -it mongodb-master-0 -n mongodb-cluster -- mongo --eval '
           rs.initiate({
             _id: "rs0",
             members: [
-              { _id: 0, host: "mongodb-aws-0.mongodb-aws-service:27017" },
-              { _id: 1, host: "mongodb-aws-1.mongodb-aws-service:27017" },
-              { _id: 2, host: "mongodb-aws-2.mongodb-aws-service:27017" }
+              { _id: 0, host: "mongodb-master-0.mongodb-workers-service:27017" },
+              { _id: 1, host: "mongodb-master-1.mongodb-workers-service:27017" },
+              { _id: 2, host: "mongodb-master-2.mongodb-workers-service:27017" }
             ]
           });'
-          echo "Verifying Replica Set Status"
-          kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
+          kubectl exec -it mongodb-master-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
