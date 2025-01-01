@@ -5,9 +5,8 @@ on:
 
 jobs:
   test:
-    runs-on: 
-      - self-hosted
-      - debian
+    runs-on: self-hosted
+  
 
     steps:
       - name: Test Runner Connection
