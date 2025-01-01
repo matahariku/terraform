@@ -1,55 +1,51 @@
-name: MongoDB HA Deployment with Minikube (Parallel)
+name: MongoDB HA Deployment
 
 on:
   workflow_dispatch:
 
 jobs:
-  deploy-aws-cluster:
-    name: Deploy MongoDB on AWS
+  deploy-mongodb:
+    name: Deploy MongoDB on AWS and OVH
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    # 1. Checkout repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Install Minikube and Start Cluster on AWS
-        run: |
-          # Install Minikube
-          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+    # 2. Install Minikube
+    - name: Install Minikube
+      run: |
+        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        sudo install minikube-linux-amd64 /usr/local/bin/minikube
 
-          # Start Minikube Cluster
-          minikube start --profile aws-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=4g --driver=docker
+    # 3. Start Minikube AWS Cluster
+    - name: Start AWS Minikube Cluster
+      run: |
+        minikube start --profile aws-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=4g --driver=docker
 
-          # Display Nodes in the Cluster
-          minikube kubectl -- --context=aws-cluster get nodes
+    # 4. Configure Kubectl for AWS
+    - name: Configure Kubectl for AWS
+      run: |
+        minikube kubectl -- --context=aws-cluster config set-context aws-cluster
+        minikube kubectl -- --context=aws-cluster config use-context aws-cluster
 
-      - name: Deploy MongoDB on AWS
-        run: |
-          # Create Namespace and Apply MongoDB Deployment
-          minikube kubectl -- --context=aws-cluster create namespace aws-namespace || true
-          minikube kubectl -- --context=aws-cluster apply -f ./minikube/mongo-statefulset-aws.yaml -n aws-namespace
+    # 5. Start Minikube OVH Cluster
+    - name: Start OVH Minikube Cluster
+      runs-on: self-hosted
+      run: |
+        minikube start --profile ovh-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=4g --driver=docker
 
-  deploy-ovh-cluster:
-    name: Deploy MongoDB on OVH
-    runs-on: self-hosted
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    # 6. Configure Kubectl for OVH
+    - name: Configure Kubectl for OVH
+      run: |
+        minikube kubectl -- --context=ovh-cluster config set-context ovh-cluster
+        minikube kubectl -- --context=ovh-cluster config use-context ovh-cluster
 
-      - name: Install Minikube and Start Cluster on OVH
-        run: |
-          # Install Minikube
-          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-          sudo install minikube-linux-amd64 /usr/local/bin/minikube
-
-          # Start Minikube Cluster
-          minikube start --profile ovh-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=4g --driver=docker
-
-          # Display Nodes in the Cluster
-          minikube kubectl -- --context=ovh-cluster get nodes
-
-      - name: Deploy MongoDB on OVH
-        run: |
-          # Create Namespace and Apply MongoDB Deployment
-          minikube kubectl -- --context=ovh-cluster create namespace ovh-namespace || true
-          minikube kubectl -- --context=ovh-cluster apply -f ./minikube/mongo-statefulset-ovh.yaml -n ovh-namespace
+    # 7. Deploy MongoDB to Both Clusters
+    - name: Deploy MongoDB StatefulSet
+      run: |
+        # AWS
+        minikube kubectl -- --context=aws-cluster apply -f ./minikube/mongo-statefulset-aws.yaml
+        # OVH
+        minikube kubectl -- --context=ovh-cluster apply -f ./minikube/mongo-statefulset-ovh.yaml
