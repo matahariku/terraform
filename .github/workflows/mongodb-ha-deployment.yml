@@ -14,13 +14,13 @@ jobs:
       - name: Setup K3s on AWS
         run: |
           curl -sfL https://get.k3s.io | sh -
+          sudo chmod 644 /etc/rancher/k3s/k3s.yaml
           echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> ~/.bashrc
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
           kubectl get nodes
 
       - name: Create namespace and deploy MongoDB
         run: |
-          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
           kubectl create namespace aws-namespace || true
           kubectl apply -f ./k3s/mongo-statefulset-aws.yaml -n aws-namespace
 
@@ -34,12 +34,12 @@ jobs:
       - name: Setup K3s on OVH
         run: |
           curl -sfL https://get.k3s.io | sh -
+          sudo chmod 644 /etc/rancher/k3s/k3s.yaml
           echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> ~/.bashrc
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
           kubectl get nodes
 
       - name: Create namespace and deploy MongoDB
         run: |
-          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
           kubectl create namespace ovh-namespace || true
           kubectl apply -f ./k3s/mongo-statefulset-ovh.yaml -n ovh-namespace
