@@ -1,49 +1,37 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mongodb-ovh
-  namespace: mongodb-cluster
+  name: mongo-ovh
+  namespace: ovh-namespace
 spec:
   replicas: 3
-  serviceName: "mongodb-ovh-service"
   selector:
     matchLabels:
-      app: mongodb-ovh
+      app: mongo
+  serviceName: "mongo-ovh-service"
   template:
     metadata:
       labels:
-        app: mongodb-ovh
+        app: mongo
     spec:
       containers:
-      - name: mongodb
+      - name: mongo
         image: mongo:6.0
         ports:
         - containerPort: 27017
-          name: mongodb
         env:
         - name: MONGO_INITDB_ROOT_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: mongo-secrets
-              key: username
+          value: root
         - name: MONGO_INITDB_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mongo-secrets
-              key: password
+          value: devops
         - name: MONGO_REPLICA_SET
-          value: "rs0"
+          value: rs0
         command:
         - mongod
         - "--replSet"
         - "rs0"
         - "--bind_ip"
         - "0.0.0.0"
-        - "--wiredTigerCacheSizeGB"
-        - "1"
-        volumeMounts:
-        - name: mongo-data
-          mountPath: /data/db
   volumeClaimTemplates:
   - metadata:
       name: mongo-data
@@ -56,13 +44,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongodb-ovh-service
-  namespace: mongodb-cluster
+  name: mongo-ovh-service
+  namespace: ovh-namespace
 spec:
   ports:
   - port: 27017
     targetPort: 27017
-    name: mongodb
-  selector:
-    app: mongodb-ovh
   clusterIP: None
+  selector:
+    app: mongo
