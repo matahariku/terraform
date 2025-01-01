@@ -21,4 +21,26 @@ jobs:
         run: sudo apt-get install tree
 
       - name: Display File Tree
-        run: tree -L 2  # Menampilkan struktur folder hingga kedalaman 2
+        run: |
+          # Menampilkan struktur file di root
+          tree -L 2 
+          
+          # Menampilkan struktur di direktori .github/workflows
+          cd .github/workflows
+          tree -L 2
+          cd ../..
+
+          # Menampilkan struktur di direktori ansible/roles
+          cd ansible/roles
+          tree -L 2
+          cd ../..
+
+          # Menampilkan struktur di direktori mongodb
+          cd mongodb
+          tree -L 2
+          cd ..
+
+          # Menampilkan struktur di direktori grafana
+          cd grafana
+          tree -L 2
+          cd ..
