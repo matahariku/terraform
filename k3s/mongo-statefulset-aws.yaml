@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mongodb-workers
+  name: mongodb-master
   namespace: mongodb-cluster
 spec:
-  replicas: 3  # Dua worker/replica
+  replicas: 3
   serviceName: "mongodb-workers-service"
   selector:
     matchLabels:
@@ -22,11 +22,17 @@ spec:
           name: mongodb
         env:
         - name: MONGO_INITDB_ROOT_USERNAME
-          value: "root"
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secrets
+              key: username
         - name: MONGO_INITDB_ROOT_PASSWORD
-          value: "devops"
+          valueFrom:
+            secretKeyRef:
+              name: mongo-secrets
+              key: password
         - name: MONGO_REPLICA_SET
-          value: "rs0"  # Tetap dalam replica set "rs0"
+          value: "rs0"
         command:
         - mongod
         - "--replSet"
@@ -34,8 +40,8 @@ spec:
         - "--bind_ip"
         - "0.0.0.0"
         - "--wiredTigerCacheSizeGB"
-        - "1"  # Batasi cache MongoDB menjadi 1 GB
-        resources:  # Batasi penggunaan resource
+        - "1"
+        resources:
           requests:
             memory: "512Mi"
             cpu: "500m"
@@ -53,17 +59,3 @@ spec:
       resources:
         requests:
           storage: 1Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mongodb-workers-service
-  namespace: mongodb-cluster
-spec:
-  ports:
-  - port: 27017
-    targetPort: 27017
-    name: mongodb
-  clusterIP: None
-  selector:
-    app: mongodb-worker
