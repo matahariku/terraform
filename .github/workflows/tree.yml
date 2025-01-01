@@ -30,15 +30,17 @@ jobs:
           tree -L 2
           cd ../..
 
+          cd terraform/aws
+          tree -L 2
+          cd ../..
+
           # Affichage de la structure dans le répertoire ansible/roles
           cd ansible/roles
           tree -L 2
           cd ../..
 
           # Affichage de la structure dans le répertoire mongodb
-          # Vérifiez si le répertoire mongodb existe réellement. 
-          # Si ce répertoire n'existe pas, cela entraînera une erreur comme celle que vous avez reçue (cd mongodb: No such file or directory).
-          cd mongodb || echo "Le répertoire mongodb n'existe pas."
+          cd mongodb 
           tree -L 2
           cd ..
 
