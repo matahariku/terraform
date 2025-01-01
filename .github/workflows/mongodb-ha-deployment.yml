@@ -1,46 +1,50 @@
-name: MongoDB HA Deployment
+name: Déploiement HA MongoDB avec Minikube
 
 on:
   workflow_dispatch:
 
 jobs:
-  deploy-aws-cluster:
-    name: Deploy MongoDB on AWS
+  deploy-clusters:
+    name: Déployer MongoDB sur AWS et OVH avec Minikube
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      # 1. Récupérer le dépôt
+      - name: Récupérer le dépôt
         uses: actions/checkout@v3
 
-      - name: Setup K3s on AWS
+      # 2. Afficher la hiérarchie des fichiers
+      - name: Afficher la hiérarchie des fichiers
         run: |
-          curl -sfL https://get.k3s.io | sh -
-          sudo chmod 644 /etc/rancher/k3s/k3s.yaml
-          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          kubectl config set-cluster default --server=https://$EC2_PUBLIC_IP_MONGODB:6443
-          kubectl get nodes
+          sudo apt-get update -y
+          sudo apt-get install -y tree
+          tree -L 2 # Affiche jusqu'à deux niveaux de répertoires
+
+      # 3. Installer Minikube sur AWS
+      - name: Installer Minikube sur AWS
+        run: |
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          minikube start --profile aws-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=4g --driver=docker
+          minikube kubectl -- --context=aws-cluster get nodes
         env:
           EC2_PUBLIC_IP_MONGODB: ${{ secrets.EC2_PUBLIC_IP_MONGODB }}
 
-      - name: Create namespace and deploy MongoDB
+      # 4. Déployer MongoDB sur AWS
+      - name: Déployer MongoDB sur AWS
         run: |
-          kubectl create namespace aws-namespace || true
-          kubectl apply -f ./k3s/mongo-statefulset-aws.yaml -n aws-namespace
+          minikube kubectl -- --context=aws-cluster create namespace aws-namespace || true
+          minikube kubectl -- --context=aws-cluster apply -f ./minikube/mongo-statefulset-aws.yaml -n aws-namespace
 
-  deploy-ovh-cluster:
-    name: Deploy MongoDB on OVH
-    runs-on: self-hosted
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup K3s on OVH
+      # 5. Installer Minikube sur OVH
+      - name: Installer Minikube sur OVH
         run: |
-          curl -sfL https://get.k3s.io | sh -
-          sudo chmod 644 /etc/rancher/k3s/k3s.yaml
-          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          kubectl get nodes
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          minikube start --profile ovh-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=4g --driver=docker
+          minikube kubectl -- --context=ovh-cluster get nodes
 
-      - name: Create namespace and deploy MongoDB
+      # 6. Déployer MongoDB sur OVH
+      - name: Déployer MongoDB sur OVH
         run: |
-          kubectl create namespace ovh-namespace || true
-          kubectl apply -f ./k3s/mongo-statefulset-ovh.yaml -n ovh-namespace
+          minikube kubectl -- --context=ovh-cluster create namespace ovh-namespace || true
+          minikube kubectl -- --context=ovh-cluster apply -f ./minikube/mongo-statefulset-ovh.yaml -n ovh-namespace
