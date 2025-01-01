@@ -16,8 +16,10 @@ jobs:
           curl -sfL https://get.k3s.io | sh -
           sudo chmod 644 /etc/rancher/k3s/k3s.yaml
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          kubectl config set-cluster default --server=https://<PUBLIC_IP>:6443
+          kubectl config set-cluster default --server=https://$EC2_IP_PUBLIC_MONGODB:6443
           kubectl get nodes
+        env:
+          EC2_IP_PUBLIC_MONGODB: ${{ secrets.EC2_IP_PUBLIC_MONGODB }}
 
       - name: Create namespace and deploy MongoDB
         run: |
@@ -36,7 +38,6 @@ jobs:
           curl -sfL https://get.k3s.io | sh -
           sudo chmod 644 /etc/rancher/k3s/k3s.yaml
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          kubectl config set-cluster default --server=https://<OVH_PUBLIC_IP>:6443
           kubectl get nodes
 
       - name: Create namespace and deploy MongoDB
