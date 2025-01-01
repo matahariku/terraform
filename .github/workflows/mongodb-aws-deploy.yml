@@ -1,60 +1,75 @@
-name: Deploy MongoDB Cluster
+name: Deploy Multi-Cluster MongoDB
 
 on:
-  workflow_dispatch: # Trigger manual untuk memulai workflow
+  workflow_dispatch: # Trigger manual
 
 jobs:
-  deploy-mongodb:
-    runs-on: ubuntu-latest
-
+  deploy-aws:
+    runs-on: ubuntu-latest # Gunakan runner GitHub hosted untuk AWS
     steps:
       # 1. Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Configure K3s Access
-      - name: Configure K3s Access
+      # 2. Configure K3s Access (AWS)
+      - name: Configure K3s Access for AWS
         run: |
-          sudo chmod 644 /etc/rancher/k3s/k3s.yaml
           mkdir -p ~/.kube
-          sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
-          sudo chmod 600 ~/.kube/config
+          echo "${{ secrets.AWS_KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
 
-      # 3. Create Namespace
-      - name: Create Namespace
-        run: |
-          kubectl create namespace mongodb-cluster || echo "Namespace already exists"
-
-      # 4. Create Kubernetes Secrets for MongoDB
-      - name: Create Kubernetes Secrets for MongoDB
-        run: |
-          kubectl create secret generic mongo-secrets \
-            --from-literal=username=${{ secrets.MONGO_USERNAME }} \
-            --from-literal=password=${{ secrets.MONGO_PASSWORD }} \
-            -n mongodb-cluster
-
-      # 5. Deploy MongoDB StatefulSet
-      - name: Deploy MongoDB StatefulSet
+      # 3. Deploy MongoDB StatefulSet in AWS
+      - name: Deploy MongoDB in AWS
         run: |
           kubectl apply -f ./k3s/mongo-statefulset-aws.yaml
           kubectl get pods -n mongodb-cluster
           kubectl get svc -n mongodb-cluster
 
-      # 6. Wait for MongoDB Pods to be Ready
-      - name: Wait for MongoDB Pods
-        run: |
-          kubectl wait --for=condition=ready pod -l app=mongodb-worker -n mongodb-cluster --timeout=300s
+  deploy-ovh:
+    runs-on: self-hosted # Gunakan runner self-hosted untuk OVH
+    steps:
+      # 1. Checkout Repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      # 7. Initialize MongoDB Replica Set
+      # 2. Configure K3s Access (OVH)
+      - name: Configure K3s Access for OVH
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.OVH_KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      # 3. Deploy MongoDB StatefulSet in OVH
+      - name: Deploy MongoDB in OVH
+        run: |
+          kubectl apply -f ./k3s/mongo-statefulset-ovh.yaml
+          kubectl get pods -n mongodb-cluster
+          kubectl get svc -n mongodb-cluster
+
+  init-replicaset:
+    needs: [deploy-aws, deploy-ovh] # Menunggu deployment selesai di AWS dan OVH
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Configure K3s Access (AWS)
+      - name: Configure K3s Access for AWS
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.AWS_KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      # 2. Initialize MongoDB Replica Set
       - name: Initialize MongoDB Replica Set
         run: |
-          kubectl exec -it mongodb-master-0 -n mongodb-cluster -- mongo --eval '
+          kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval "
           rs.initiate({
-            _id: "rs0",
+            _id: 'rs0',
             members: [
-              { _id: 0, host: "mongodb-master-0.mongodb-workers-service:27017" },
-              { _id: 1, host: "mongodb-master-1.mongodb-workers-service:27017" },
-              { _id: 2, host: "mongodb-master-2.mongodb-workers-service:27017" }
+              { _id: 0, host: 'mongodb-aws-0.mongodb-aws-service:27017' },
+              { _id: 1, host: 'mongodb-aws-1.mongodb-aws-service:27017' },
+              { _id: 2, host: 'mongodb-aws-2.mongodb-aws-service:27017' },
+              { _id: 3, host: 'mongodb-ovh-0.mongodb-ovh-service:27017' },
+              { _id: 4, host: 'mongodb-ovh-1.mongodb-ovh-service:27017' },
+              { _id: 5, host: 'mongodb-ovh-2.mongodb-ovh-service:27017' }
             ]
-          });'
-          kubectl exec -it mongodb-master-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
+          });"
+          kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
