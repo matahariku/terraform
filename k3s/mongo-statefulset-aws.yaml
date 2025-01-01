@@ -4,7 +4,7 @@ metadata:
   name: mongodb-workers
   namespace: mongodb-cluster
 spec:
-  replicas: 2  # Dua worker/replica
+  replicas: 3  # Dua worker/replica
   serviceName: "mongodb-workers-service"
   selector:
     matchLabels:
