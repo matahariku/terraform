@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mongodb-master
+  name: mongodb-aws
   namespace: mongodb-cluster
 spec:
   replicas: 3
-  serviceName: "mongodb-workers-service"
+  serviceName: "mongodb-aws-service"
   selector:
     matchLabels:
-      app: mongodb-worker
+      app: mongodb-aws
   template:
     metadata:
       labels:
-        app: mongodb-worker
+        app: mongodb-aws
     spec:
       containers:
       - name: mongodb
@@ -41,13 +41,6 @@ spec:
         - "0.0.0.0"
         - "--wiredTigerCacheSizeGB"
         - "1"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "1Gi"
-            cpu: "1"
         volumeMounts:
         - name: mongo-data
           mountPath: /data/db
@@ -59,3 +52,17 @@ spec:
       resources:
         requests:
           storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-aws-service
+  namespace: mongodb-cluster
+spec:
+  ports:
+  - port: 27017
+    targetPort: 27017
+    name: mongodb
+  selector:
+    app: mongodb-aws
+  clusterIP: None
