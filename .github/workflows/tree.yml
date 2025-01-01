@@ -22,25 +22,27 @@ jobs:
 
       - name: Display File Tree
         run: |
-          # Menampilkan struktur file di root
+          # Affichage de la structure des fichiers à la racine
           tree -L 2 
           
-          # Menampilkan struktur di direktori .github/workflows
+          # Affichage de la structure dans le répertoire .github/workflows
           cd .github/workflows
           tree -L 2
           cd ../..
 
-          # Menampilkan struktur di direktori ansible/roles
+          # Affichage de la structure dans le répertoire ansible/roles
           cd ansible/roles
           tree -L 2
           cd ../..
 
-          # Menampilkan struktur di direktori mongodb
-          cd mongodb
+          # Affichage de la structure dans le répertoire mongodb
+          # Vérifiez si le répertoire mongodb existe réellement. 
+          # Si ce répertoire n'existe pas, cela entraînera une erreur comme celle que vous avez reçue (cd mongodb: No such file or directory).
+          cd mongodb || echo "Le répertoire mongodb n'existe pas."
           tree -L 2
           cd ..
 
-          # Menampilkan struktur di direktori grafana
+          # Affichage de la structure dans le répertoire grafana
           cd grafana
           tree -L 2
           cd ..
