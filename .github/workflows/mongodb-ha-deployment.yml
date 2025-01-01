@@ -15,8 +15,8 @@ jobs:
         run: |
           curl -sfL https://get.k3s.io | sh -
           sudo chmod 644 /etc/rancher/k3s/k3s.yaml
-          echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> ~/.bashrc
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+          kubectl config set-cluster default --server=https://<PUBLIC_IP>:6443
           kubectl get nodes
 
       - name: Create namespace and deploy MongoDB
@@ -35,8 +35,8 @@ jobs:
         run: |
           curl -sfL https://get.k3s.io | sh -
           sudo chmod 644 /etc/rancher/k3s/k3s.yaml
-          echo "export KUBECONFIG=/etc/rancher/k3s/k3s.yaml" >> ~/.bashrc
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+          kubectl config set-cluster default --server=https://<OVH_PUBLIC_IP>:6443
           kubectl get nodes
 
       - name: Create namespace and deploy MongoDB
