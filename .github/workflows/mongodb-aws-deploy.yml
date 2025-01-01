@@ -1,75 +1,57 @@
-name: Deploy Multi-Cluster MongoDB
+name: Setup Multi-Cluster with Minikube
 
 on:
-  workflow_dispatch: # Trigger manual
+  workflow_dispatch:
 
 jobs:
-  deploy-aws:
-    runs-on: ubuntu-latest # Gunakan runner GitHub hosted untuk AWS
-    steps:
-      # 1. Checkout Repository
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      # 2. Configure K3s Access (AWS)
-      - name: Configure K3s Access for AWS
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.AWS_KUBECONFIG }}" > ~/.kube/config
-          chmod 600 ~/.kube/config
-
-      # 3. Deploy MongoDB StatefulSet in AWS
-      - name: Deploy MongoDB in AWS
-        run: |
-          kubectl apply -f ./k3s/mongo-statefulset-aws.yaml
-          kubectl get pods -n mongodb-cluster
-          kubectl get svc -n mongodb-cluster
-
-  deploy-ovh:
-    runs-on: self-hosted # Gunakan runner self-hosted untuk OVH
-    steps:
-      # 1. Checkout Repository
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      # 2. Configure K3s Access (OVH)
-      - name: Configure K3s Access for OVH
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.OVH_KUBECONFIG }}" > ~/.kube/config
-          chmod 600 ~/.kube/config
-
-      # 3. Deploy MongoDB StatefulSet in OVH
-      - name: Deploy MongoDB in OVH
-        run: |
-          kubectl apply -f ./k3s/mongo-statefulset-ovh.yaml
-          kubectl get pods -n mongodb-cluster
-          kubectl get svc -n mongodb-cluster
-
-  init-replicaset:
-    needs: [deploy-aws, deploy-ovh] # Menunggu deployment selesai di AWS dan OVH
+  setup-multi-cluster:
     runs-on: ubuntu-latest
-    steps:
-      # 1. Configure K3s Access (AWS)
-      - name: Configure K3s Access for AWS
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.AWS_KUBECONFIG }}" > ~/.kube/config
-          chmod 600 ~/.kube/config
 
-      # 2. Initialize MongoDB Replica Set
-      - name: Initialize MongoDB Replica Set
+    steps:
+      # 1. Checkout repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # 2. Install Minikube and Kubectl
+      - name: Install Minikube and Kubectl
         run: |
-          kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval "
-          rs.initiate({
-            _id: 'rs0',
-            members: [
-              { _id: 0, host: 'mongodb-aws-0.mongodb-aws-service:27017' },
-              { _id: 1, host: 'mongodb-aws-1.mongodb-aws-service:27017' },
-              { _id: 2, host: 'mongodb-aws-2.mongodb-aws-service:27017' },
-              { _id: 3, host: 'mongodb-ovh-0.mongodb-ovh-service:27017' },
-              { _id: 4, host: 'mongodb-ovh-1.mongodb-ovh-service:27017' },
-              { _id: 5, host: 'mongodb-ovh-2.mongodb-ovh-service:27017' }
-            ]
-          });"
-          kubectl exec -it mongodb-aws-0 -n mongodb-cluster -- mongo --eval 'rs.status();'
+          sudo apt-get update -y
+          sudo apt-get install -y apt-transport-https curl
+          sudo curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          sudo curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          sudo install kubectl /usr/local/bin/kubectl
+
+      # 3. Start Minikube Cluster for AWS
+      - name: Start Minikube Cluster (AWS)
+        run: |
+          minikube start --profile aws-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=2g
+          kubectl config use-context aws-cluster
+
+      # 4. Deploy Resources to AWS Cluster
+      - name: Deploy MongoDB to AWS Cluster
+        run: |
+          kubectl create namespace aws-namespace
+          kubectl apply -f k8s/mongo-deployment-aws.yaml -n aws-namespace
+
+      # 5. Start Minikube Cluster for OVH
+      - name: Start Minikube Cluster (OVH)
+        run: |
+          minikube start --profile ovh-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=2g
+          kubectl config use-context ovh-cluster
+
+      # 6. Deploy Resources to OVH Cluster
+      - name: Deploy MongoDB to OVH Cluster
+        run: |
+          kubectl create namespace ovh-namespace
+          kubectl apply -f k8s/mongo-deployment-ovh.yaml -n ovh-namespace
+
+      # 7. Verify Deployments
+      - name: Verify AWS Deployment
+        run: |
+          kubectl config use-context aws-cluster
+          kubectl get pods -n aws-namespace
+      - name: Verify OVH Deployment
+        run: |
+          kubectl config use-context ovh-cluster
+          kubectl get pods -n ovh-namespace
