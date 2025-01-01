@@ -11,7 +11,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Install Minikube and Kubectl
+      # 2. Tampilkan Struktur File Repository
+      - name: Show Repository Structure
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y tree
+          tree -a -L 3
+
+      # 3. Install Minikube and Kubectl
       - name: Install Minikube and Kubectl
         run: |
           sudo apt-get update -y
@@ -21,14 +28,14 @@ jobs:
           sudo curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           sudo install kubectl /usr/local/bin/kubectl
 
-      # 3. Start Minikube Cluster for AWS
-      - name: Start Minikube Cluster (AWS)
+      # 4. Start AWS Minikube Cluster
+      - name: Start AWS Minikube Cluster
         run: |
-          minikube start --profile aws-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=2g
+          minikube start --profile aws-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=4g --driver=docker
           kubectl config use-context aws-cluster
 
-      # 4. Deploy MongoDB StatefulSet to AWS
-      - name: Deploy MongoDB to AWS
+      # 5. Deploy MongoDB StatefulSet
+      - name: Deploy MongoDB StatefulSet
         run: |
           kubectl create namespace aws-namespace
           kubectl apply -f k8s/mongo-statefulset-aws.yaml -n aws-namespace
@@ -40,7 +47,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # 2. Install Minikube and Kubectl on Self-Hosted Runner
+      # 2. Tampilkan Struktur File Repository
+      - name: Show Repository Structure
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y tree
+          tree -a -L 3
+
+      # 3. Install Minikube and Kubectl
       - name: Install Minikube and Kubectl
         run: |
           sudo apt-get update -y
@@ -50,14 +64,14 @@ jobs:
           sudo curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
           sudo install kubectl /usr/local/bin/kubectl
 
-      # 3. Start Minikube Cluster for OVH
-      - name: Start Minikube Cluster (OVH)
+      # 4. Start OVH Minikube Cluster
+      - name: Start OVH Minikube Cluster
         run: |
-          minikube start --profile ovh-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=2g
+          minikube start --profile ovh-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=2g --driver=docker
           kubectl config use-context ovh-cluster
 
-      # 4. Deploy MongoDB StatefulSet to OVH
-      - name: Deploy MongoDB to OVH
+      # 5. Deploy MongoDB StatefulSet
+      - name: Deploy MongoDB StatefulSet
         run: |
           kubectl create namespace ovh-namespace
           kubectl apply -f k8s/mongo-statefulset-ovh.yaml -n ovh-namespace
