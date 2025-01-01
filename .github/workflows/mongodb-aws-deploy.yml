@@ -1,14 +1,14 @@
-name: Setup Multi-Cluster with Minikube
+name: Setup MongoDB Replica Set with Multi-Cluster
 
 on:
   workflow_dispatch:
 
 jobs:
-  setup-multi-cluster:
+  setup-replica-sets:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
+      # 1. Checkout Repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
@@ -28,11 +28,11 @@ jobs:
           minikube start --profile aws-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=2g
           kubectl config use-context aws-cluster
 
-      # 4. Deploy Resources to AWS Cluster
-      - name: Deploy MongoDB to AWS Cluster
+      # 4. Deploy MongoDB StatefulSet to AWS
+      - name: Deploy MongoDB to AWS
         run: |
           kubectl create namespace aws-namespace
-          kubectl apply -f k8s/mongo-deployment-aws.yaml -n aws-namespace
+          kubectl apply -f k8s/mongo-statefulset-aws.yaml -n aws-namespace
 
       # 5. Start Minikube Cluster for OVH
       - name: Start Minikube Cluster (OVH)
@@ -40,13 +40,39 @@ jobs:
           minikube start --profile ovh-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=2g
           kubectl config use-context ovh-cluster
 
-      # 6. Deploy Resources to OVH Cluster
-      - name: Deploy MongoDB to OVH Cluster
+      # 6. Deploy MongoDB StatefulSet to OVH
+      - name: Deploy MongoDB to OVH
         run: |
           kubectl create namespace ovh-namespace
-          kubectl apply -f k8s/mongo-deployment-ovh.yaml -n ovh-namespace
+          kubectl apply -f k8s/mongo-statefulset-ovh.yaml -n ovh-namespace
 
-      # 7. Verify Deployments
+      # 7. Initialize MongoDB Replica Set for AWS
+      - name: Initialize MongoDB Replica Set (AWS)
+        run: |
+          kubectl exec -n aws-namespace mongo-aws-0 -- mongo --eval '
+          rs.initiate({
+            _id: "rs0",
+            members: [
+              { _id: 0, host: "mongo-aws-0.mongo-aws-service:27017" },
+              { _id: 1, host: "mongo-aws-1.mongo-aws-service:27017" },
+              { _id: 2, host: "mongo-aws-2.mongo-aws-service:27017" }
+            ]
+          });'
+
+      # 8. Initialize MongoDB Replica Set for OVH
+      - name: Initialize MongoDB Replica Set (OVH)
+        run: |
+          kubectl exec -n ovh-namespace mongo-ovh-0 -- mongo --eval '
+          rs.initiate({
+            _id: "rs0",
+            members: [
+              { _id: 0, host: "mongo-ovh-0.mongo-ovh-service:27017" },
+              { _id: 1, host: "mongo-ovh-1.mongo-ovh-service:27017" },
+              { _id: 2, host: "mongo-ovh-2.mongo-ovh-service:27017" }
+            ]
+          });'
+
+      # 9. Verify Deployments
       - name: Verify AWS Deployment
         run: |
           kubectl config use-context aws-cluster
