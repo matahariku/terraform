@@ -40,11 +40,11 @@ jobs:
           cd ../..
 
           # Affichage de la structure dans le répertoire mongodb
-          cd mongodb 
+          cd ansible/roles/mongodb 
           tree -L 2
-          cd ..
+          cd ../../..
 
           # Affichage de la structure dans le répertoire grafana
-          cd grafana
+          cd ansible/roles/grafana
           tree -L 2
           cd ..
