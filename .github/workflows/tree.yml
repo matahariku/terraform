@@ -1,0 +1,24 @@
+name: Display Tree of Files
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  display-tree:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Install Tree Command
+        run: sudo apt-get install tree
+
+      - name: Display File Tree
+        run: tree -L 2  # Menampilkan struktur folder hingga kedalaman 2
