@@ -1,10 +1,10 @@
-name: Setup MongoDB Replica Set with Multi-Cluster
+name: Multi-Cluster MongoDB Deployment
 
 on:
   workflow_dispatch:
 
 jobs:
-  setup-replica-sets:
+  deploy-multi-cluster:
     runs-on: ubuntu-latest
 
     steps:
