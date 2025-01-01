@@ -13,26 +13,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Configure Kubectl for OVH
+      # 2. Install Minikube
+      - name: Install Minikube
+        run: |
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+      # 3. Start OVH Minikube Cluster
+      - name: Start OVH Minikube Cluster
+        run: |
+          minikube start --profile ovh-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=4g --driver=docker
+
+      # 4. Configure Kubectl for OVH
       - name: Configure Kubectl for OVH
         run: |
-          export KUBECONFIG=$HOME/.kube/config
-          kubectl config use-context ovh-cluster
+          minikube kubectl -- --context=ovh-cluster config use-context ovh-cluster
 
-      # 3. Deploy MongoDB StatefulSet
+      # 5. Deploy MongoDB StatefulSet on OVH
       - name: Deploy MongoDB StatefulSet
         run: |
           kubectl apply -f ./minikube/mongo-statefulset-ovh.yaml
 
-      # 4. Add OVH Node to Replica Set
+      # 6. Add OVH Node to Replica Set
       - name: Add OVH Node to Replica Set
         run: |
           kubectl exec -it mongo-0 -n mongo-namespace -- mongo --eval '
             rs.add("mongo-0.mongo-service.mongo-namespace.svc.cluster.local:27017");
           '
 
-      # 5. Add OVH Node IP to Replica Set (AWS example equivalent)
-      - name: Add OVH Node to Replica Set
+      # 7. Add OVH Node IP to Replica Set (AWS example equivalent)
+      - name: Add OVH Node IP to Replica Set
         run: |
           kubectl exec -it mongo-0 -n mongo-namespace -- mongo --eval '
             rs.add("OVH_PUBLIC_IP:27017");
