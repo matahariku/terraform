@@ -86,8 +86,9 @@ module "gitea_sg" {
 }
 
 output "gitea_public_ip" {
-  value = aws_eip.gitea.public_ip 
+  value = data.aws_eip.gitea.public_ip
 }
+
 
 module "gitea-nlb" {
   depends_on = [module.gitea]
