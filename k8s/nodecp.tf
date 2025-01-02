@@ -44,8 +44,9 @@ module "cpnode1" {
 }
 
 output "cpnode1_public_ip" {
-  value = aws_eip.controlplan.public_ip # Mengambil EIP yang terasosiasi
+  value = data.aws_eip.controlplan.public_ip
 }
+
 
 output "cpnode1_private_dns" {
   value = module.cpnode1.private_dns
