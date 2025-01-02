@@ -1,14 +1,14 @@
 name: Terraform Destroy
 
 on:
-  workflow_dispatch: # Workflow bisa dijalankan secara manual
+  workflow_dispatch: # Workflow manual
 
 jobs:
   destroy:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the Code
+      # Step 1: Checkout Code
       - name: Checkout Code
         uses: actions/checkout@v3
 
@@ -25,7 +25,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         run: terraform init
-        working-directory: ./k8s # Sesuaikan dengan lokasi file Terraform Anda
+        working-directory: ./k8s
 
       # Step 4: Terraform Destroy
       - name: Terraform Destroy
@@ -34,4 +34,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         run: terraform destroy -auto-approve
-        working-directory: ./k8s # Sesuaikan dengan lokasi file Terraform Anda
+        working-directory: ./k8s
