@@ -1,0 +1,70 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+packages:
+- nginx
+- vim
+- bash-completion
+- git
+- podman
+- python3-virtualenv
+- python3-pip
+- ansible
+
+write_files:
+- path: /home/ubuntu/apps/gitea/deploy.yaml
+  defer: true
+  permissions: '0600'
+  owner: 'ubuntu:ubuntu'
+  content: |
+    - name: Deploy Gitea via LSR
+      hosts: localhost
+      become: false
+      vars:
+        container_name: gitea
+        podman_create_host_directories: true
+        podman_kube_specs:
+          - state: started
+            run_as_user: ubuntu
+            run_as_group: ubuntu
+            kube_file_src: gitea.yaml
+      roles:
+        - fedora.linux_system_roles.podman
+
+- path: /home/ubuntu/apps/gitea/gitea.yaml
+  defer: true
+  permissions: '0600'
+  owner: 'ubuntu:ubuntu'
+  content: |
+    ---
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      labels:
+        app: gitea-pod
+      name: gitea-pod
+    spec:
+      containers:
+      - args:
+        - /bin/s6-svscan
+        - /etc/s6
+        image: docker.io/gitea/gitea:latest
+        name: gitea
+        ports:
+        - containerPort: 22
+          hostPort: 2222
+        - containerPort: 3000
+          hostPort: 3000
+        volumeMounts:
+        - mountPath: /data
+          name: gitea-data-pvc
+      volumes:
+      - name: gitea-data-pvc
+        persistentVolumeClaim:
+          claimName: gitea-data
+
+runcmd:
+- cd /home/ubuntu/apps/gitea
+- su -l ubuntu -c 'ansible-galaxy collection install fedora.linux_system_roles'
+- ansible-playbook deploy.yaml
+- su -l ubuntu -c 'cd /home/ubuntu/apps/gitea && ansible-playbook ./deploy.yaml'
