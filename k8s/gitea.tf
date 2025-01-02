@@ -10,10 +10,9 @@ data "cloudinit_config" "gitea" {
   }
 }
 
-resource "aws_eip" "gitea" {
-  depends_on = [module.vpc]
-  instance   = module.gitea.id
-  domain     = "vpc"
+resource "aws_eip_association" "gitea" {
+  allocation_id = "eipalloc-0bd8734d0a6e31dcc" 
+  instance_id   = module.gitea.id
 }
 
 module "gitea" {
@@ -27,7 +26,7 @@ module "gitea" {
   key_name                    = local.key_name
   monitoring                  = false
   user_data                   = data.cloudinit_config.gitea.rendered
-  associate_public_ip_address = true
+  associate_public_ip_address = false # Tidak menggunakan IP publik bawaan
   vpc_security_group_ids      = [module.gitea_sg.security_group_id]
   subnet_id                   = module.vpc.public_subnets[0]
 }
@@ -82,7 +81,7 @@ module "gitea_sg" {
 }
 
 output "gitea_public_ip" {
-  value = module.gitea.public_ip
+  value = "54.85.107.237" # IP publik yang sudah dialokasikan
 }
 
 module "gitea-nlb" {
@@ -139,7 +138,6 @@ module "gitea-nlb" {
       target_id   = module.gitea.private_ip
     }
   }
-
 }
 
 output "gitea_nlb_dns_name" {
