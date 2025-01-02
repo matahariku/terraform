@@ -7,16 +7,21 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "deploy-aws-terra"         # Nama bucket S3 Anda
-    key            = "terraform/state/aws/terraform.tfstate" # Lokasi file state di bucket
+    bucket         = "deploy-aws-terra"         # Nama bucket S3
+    key            = "terraform/state/aws/terraform.tfstate" # Lokasi file state
     region         = "us-east-1"               # Wilayah AWS
-    dynamodb_table = "terraform-lock-table"    # Tabel DynamoDB untuk lock
-    encrypt        = true                      # Enkripsi file state
+    dynamodb_table = "terraform-lock-table"    # DynamoDB untuk state locking
+    encrypt        = true                      # Enkripsi state file
   }
 }
 
 provider "aws" {
+  region = "us-east-1" # Wilayah AWS (ganti jika perlu)
+
   default_tags {
-    # Tambahkan tags default jika perlu
+    tags = {
+      Environment = "Production"
+      Project     = "K8S Cluster"
+    }
   }
 }
