@@ -7,16 +7,16 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "deploy-aws-terra"         # Nama bucket S3
-    key            = "terraform/state/aws/terraform.tfstate" # Lokasi file state
-    region         = "us-east-1"               # Wilayah AWS
-    dynamodb_table = "terraform-lock-table"    # DynamoDB untuk state locking
-    encrypt        = true                      # Enkripsi state file
+    bucket         = "deploy-aws-terra"         # Name bucket S3
+    key            = "terraform/state/aws/terraform.tfstate" # Location file state
+    region         = "us-east-1"               
+    dynamodb_table = "terraform-lock-table"    # DynamoDB for state locking
+    encrypt        = true                      
   }
 }
 
 provider "aws" {
-  region = "us-east-1" # Wilayah AWS (ganti jika perlu)
+  region = "us-east-1" 
 
   default_tags {
     tags = {
