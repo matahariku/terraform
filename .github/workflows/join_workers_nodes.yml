@@ -44,4 +44,5 @@ jobs:
 
             # Join cluster
             $JOIN_CLUSTER
-EOF
+            
+          EOF
