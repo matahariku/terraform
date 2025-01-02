@@ -4,52 +4,71 @@ on:
   workflow_dispatch:
 
 jobs:
-  join-worker:
-    name: Join Worker to Master Node
+  worker1:
+    name: Join Worker Node 1 to Master
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        worker:
-          - { ip: "EC2_PUBLIC_IP_WORKER1", user: "EC2_USER_WORKER1" }
-          - { ip: "EC2_PUBLIC_IP_WORKER2", user: "EC2_USER_WORKER2" }
-
     steps:
       - name: Install SSH Client
         run: |
           sudo apt-get update
           sudo apt-get install -y openssh-client
 
-      - name: Set Environment Variables
+      - name: Configure Worker Node 1 and Join Cluster
         env:
-          WORKER_IP: ${{ secrets[matrix.worker.ip] }}
-          WORKER_USER: ${{ secrets[matrix.worker.user] }}
+          SSH_PRIVATE_KEY: ${{ secrets.KEY_BLOC4 }}
+          WORKER_IP: ${{ secrets.EC2_PUBLIC_IP_WORKER1 }}
+          WORKER_USER: ${{ secrets.EC2_USER_WORKER1 }}
           JOIN_CLUSTER: ${{ secrets.JOIN_CLUSTER }}
-          SSH_PRIVATE_KEY: ${{ secrets.KEY_BLOC4 }}
         run: |
-          echo "WORKER_IP=${{ env.WORKER_IP }}" >> $GITHUB_ENV
-          echo "WORKER_USER=${{ env.WORKER_USER }}" >> $GITHUB_ENV
-          echo "JOIN_CLUSTER=${{ env.JOIN_CLUSTER }}" >> $GITHUB_ENV
-
-      - name: Configure Worker Node and Join Cluster
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.KEY_BLOC4 }}
-        run: |
-          # Create SSH key file
           echo "$SSH_PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
 
-          # SSH into worker node and configure
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ env.WORKER_USER }}@${{ env.WORKER_IP }} <<'EOF'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $WORKER_USER@$WORKER_IP <<'EOF'
             # Add user to microk8s group
-            sudo usermod -a -G microk8s ${{ env.WORKER_USER }}
+            sudo usermod -a -G microk8s $WORKER_USER
 
             # Create .kube directory
             mkdir -p ~/.kube
-            sudo chown -R ${{ env.WORKER_USER }} ~/.kube
+            sudo chown -R $WORKER_USER ~/.kube
 
             # Activate group change
             newgrp microk8s
 
             # Join cluster
-            ${{ env.JOIN_CLUSTER }}
+            $JOIN_CLUSTER
+          EOF
+
+  worker2:
+    name: Join Worker Node 2 to Master
+    runs-on: ubuntu-latest
+    needs: worker1
+    steps:
+      - name: Install SSH Client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-client
+
+      - name: Configure Worker Node 2 and Join Cluster
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.KEY_BLOC4 }}
+          WORKER_IP: ${{ secrets.EC2_PUBLIC_IP_WORKER2 }}
+          WORKER_USER: ${{ secrets.EC2_USER_WORKER2 }}
+          JOIN_CLUSTER: ${{ secrets.JOIN_CLUSTER }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $WORKER_USER@$WORKER_IP <<'EOF'
+            # Add user to microk8s group
+            sudo usermod -a -G microk8s $WORKER_USER
+
+            # Create .kube directory
+            mkdir -p ~/.kube
+            sudo chown -R $WORKER_USER ~/.kube
+
+            # Activate group change
+            newgrp microk8s
+
+            # Join cluster
+            $JOIN_CLUSTER
           EOF
