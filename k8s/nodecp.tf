@@ -11,9 +11,10 @@ data "cloudinit_config" "controlplan" {
 }
 
 resource "aws_eip" "controlplan" {
-  instance = module.cpnode1.id
-  domain   = "vpc"
-  tags     = local.tags
+  allocation_id = "eipalloc-b1416146-bb57-410a-994f-2656a786cb98" 
+  instance      = module.cpnode1.id
+  domain        = "vpc"
+  tags          = local.tags
 }
 
 module "cpnode1" {
@@ -29,7 +30,7 @@ module "cpnode1" {
   key_name                    = local.key_name
   monitoring                  = false
   user_data                   = data.cloudinit_config.controlplan.rendered
-  associate_public_ip_address = true
+  associate_public_ip_address = false
   vpc_security_group_ids = [
     module.controlplan_sg.security_group_id,
     module.inter-nodes_sg.security_group_id
@@ -40,7 +41,7 @@ module "cpnode1" {
 }
 
 output "cpnode1_public_ip" {
-  value = module.cpnode1.public_ip
+  value = aws_eip.controlplan.public_ip # Mengambil EIP yang terasosiasi
 }
 
 output "cpnode1_private_dns" {
