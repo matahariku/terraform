@@ -11,9 +11,10 @@ data "cloudinit_config" "gitea" {
 }
 
 resource "aws_eip" "gitea" {
-  depends_on = [module.vpc]
-  instance   = module.gitea.id
-  domain     = "vpc"
+  allocation_id = "eipalloc-228b059f-a4bd-4a73-90d9-40871c7a1bbd" 
+  instance      = module.gitea.id
+  domain        = "vpc"
+  tags          = local.tags
 }
 
 module "gitea" {
@@ -27,7 +28,7 @@ module "gitea" {
   key_name                    = local.key_name
   monitoring                  = false
   user_data                   = data.cloudinit_config.gitea.rendered
-  associate_public_ip_address = true
+  associate_public_ip_address = false 
   vpc_security_group_ids      = [module.gitea_sg.security_group_id]
   subnet_id                   = module.vpc.public_subnets[0]
 }
@@ -82,7 +83,7 @@ module "gitea_sg" {
 }
 
 output "gitea_public_ip" {
-  value = module.gitea.public_ip
+  value = aws_eip.gitea.public_ip 
 }
 
 module "gitea-nlb" {
