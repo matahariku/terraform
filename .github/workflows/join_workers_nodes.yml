@@ -1,0 +1,47 @@
+name: Join Worker Nodes to Master
+
+on:
+  workflow_dispatch:
+
+jobs:
+  join-worker:
+    name: Join Worker to Master Node
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        worker:
+          - WORKER_IP: ${{ secrets.EC2_PUBLIC_IP_WORKER1 }}
+            WORKER_USER: ${{ secrets.EC2_USER_WORKER1 }}
+          - WORKER_IP: ${{ secrets.EC2_PUBLIC_IP_WORKER2 }}
+            WORKER_USER: ${{ secrets.EC2_USER_WORKER2 }}
+
+    steps:
+      - name: Install SSH Client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-client
+
+      - name: Configure Worker Node and Join Cluster
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.KEY_BLOC4 }}
+          JOIN_CLUSTER: ${{ secrets.JOIN_CLUSTER }}
+        run: |
+          # Create SSH key file
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+
+          # SSH into worker node and configure
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ matrix.worker.WORKER_USER }}@${{ matrix.worker.WORKER_IP }} <<'EOF'
+            # Add user to microk8s group
+            sudo usermod -a -G microk8s ${{ matrix.worker.WORKER_USER }}
+
+            # Create .kube directory
+            mkdir -p ~/.kube
+            sudo chown -R ${{ matrix.worker.WORKER_USER }} ~/.kube
+
+            # Activate group change
+            newgrp microk8s
+
+            # Join cluster
+            $JOIN_CLUSTER
+EOF
