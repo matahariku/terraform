@@ -1,0 +1,45 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+packages:
+- vim
+- bash-completion
+- git
+- jq
+
+write_files:
+- path: /root/kubeadm.config
+  content: |
+    apiVersion: kubeadm.k8s.io/v1beta3
+    kind: JoinConfiguration
+    discovery:
+      bootstrapToken:
+        token: 30am0s.hleb5xs1dyz4ridc
+        apiServerEndpoint: ${module.cpnode1.public_ip}:6443
+        caCertHashes:
+          - "sha256:8b2127f960d88432fb35fd7488a501ad189e1a4ab319158d0e01a1db7fec96d7"
+    nodeRegistration:
+      name: ip-172-31-18-193.us-west-2.compute.internal
+      kubeletExtraArgs:
+        cloud-provider: external
+
+runcmd:
+- export KUBERNETES_VERSION=v1.30
+- export PROJECT_PATH=prerelease:/main
+- curl -fsSL https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+- echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
+- curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/$PROJECT_PATH/deb/Release.key |
+    gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
+- echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/$PROJECT_PATH/deb/ /" | tee /etc/apt/sources.list.d/cri-o.list
+- apt-get update
+- apt-get install -y cri-o kubelet kubeadm kubectl
+- systemctl daemon-reload
+- systemctl enable --now crio.service
+- swapoff -a
+- modprobe br_netfilter
+- sysctl -w net.ipv4.ip_forward=1
+- local_ip=$(ip --json addr show eth0 | jq -r '.[0].addr_info[] | select(.family == "inet") | .local')
+- echo "KUBELET_EXTRA_ARGS=--node-ip=$local_ip" | sudo tee /etc/default/kubelet > /dev/null
+- kubeadm completion bash |tee /usr/share/bash-completion/completions/kubeadm
+- kubectl completion bash |tee /usr/share/bash-completion/completions/kubectl
+- kubeadm config images pull
