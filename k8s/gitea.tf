@@ -11,14 +11,16 @@ data "cloudinit_config" "gitea" {
 }
 
 data "aws_eip" "gitea" {
-  id = "eipalloc-228b059f-a4bd-4a73-90d9-40871c7a1bbd" 
+  filter {
+    name   = "allocation-id"
+    values = ["eipalloc-228b059f-a4bd-4a73-90d9-40871c7a1bbd"] 
+  }
 }
 
 resource "aws_eip_association" "gitea_association" {
   allocation_id = data.aws_eip.gitea.id
   instance_id   = module.gitea.id
 }
-
 
 module "gitea" {
   depends_on = [module.vpc]
@@ -86,9 +88,9 @@ module "gitea_sg" {
 }
 
 output "gitea_public_ip" {
-  value = data.aws_eip.gitea.public_ip
+  value       = data.aws_eip.gitea.public_ip
+  description = "Public IP address for the Gitea instance."
 }
-
 
 module "gitea-nlb" {
   depends_on = [module.gitea]
@@ -148,5 +150,6 @@ module "gitea-nlb" {
 }
 
 output "gitea_nlb_dns_name" {
-  value = module.gitea-nlb.dns_name
+  value       = module.gitea-nlb.dns_name
+  description = "DNS name for the Gitea Network Load Balancer."
 }
