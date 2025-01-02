@@ -10,16 +10,10 @@ data "cloudinit_config" "controlplan" {
   }
 }
 
-data "aws_eip" "controlplan" {
-  filter {
-    name   = "allocation-id"
-    values = ["eipalloc-b1416146-bb57-410a-994f-2656a786cb98"]
-  }
-}
-
-resource "aws_eip_association" "controlplan_association" {
-  allocation_id = data.aws_eip.controlplan.id
-  instance_id   = module.cpnode1.id
+resource "aws_eip" "controlplan" {
+  instance = module.cpnode1.id
+  domain   = "vpc"
+  tags     = local.tags
 }
 
 module "cpnode1" {
@@ -35,7 +29,7 @@ module "cpnode1" {
   key_name                    = local.key_name
   monitoring                  = false
   user_data                   = data.cloudinit_config.controlplan.rendered
-  associate_public_ip_address = false 
+  associate_public_ip_address = true
   vpc_security_group_ids = [
     module.controlplan_sg.security_group_id,
     module.inter-nodes_sg.security_group_id
@@ -46,11 +40,9 @@ module "cpnode1" {
 }
 
 output "cpnode1_public_ip" {
-  value       = data.aws_eip.controlplan.public_ip
-  description = "Public IP address for the control plane instance."
+  value = module.cpnode1.public_ip
 }
 
 output "cpnode1_private_dns" {
-  value       = module.cpnode1.private_dns
-  description = "Private DNS for the control plane instance."
+  value = module.cpnode1.private_dns
 }
