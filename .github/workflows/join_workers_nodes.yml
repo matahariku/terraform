@@ -9,12 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        worker_ip:
-          - ${{ secrets.EC2_PUBLIC_IP_WORKER1 }}
-          - ${{ secrets.EC2_PUBLIC_IP_WORKER2 }}
-        worker_user:
-          - ${{ secrets.EC2_USER_WORKER1 }}
-          - ${{ secrets.EC2_USER_WORKER2 }}
+        worker:
+          - { ip: "EC2_PUBLIC_IP_WORKER1", user: "EC2_USER_WORKER1" }
+          - { ip: "EC2_PUBLIC_IP_WORKER2", user: "EC2_USER_WORKER2" }
 
     steps:
       - name: Install SSH Client
@@ -22,27 +19,37 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y openssh-client
 
+      - name: Set Environment Variables
+        env:
+          WORKER_IP: ${{ secrets[matrix.worker.ip] }}
+          WORKER_USER: ${{ secrets[matrix.worker.user] }}
+          JOIN_CLUSTER: ${{ secrets.JOIN_CLUSTER }}
+          SSH_PRIVATE_KEY: ${{ secrets.KEY_BLOC4 }}
+        run: |
+          echo "WORKER_IP=${{ env.WORKER_IP }}" >> $GITHUB_ENV
+          echo "WORKER_USER=${{ env.WORKER_USER }}" >> $GITHUB_ENV
+          echo "JOIN_CLUSTER=${{ env.JOIN_CLUSTER }}" >> $GITHUB_ENV
+
       - name: Configure Worker Node and Join Cluster
         env:
           SSH_PRIVATE_KEY: ${{ secrets.KEY_BLOC4 }}
-          JOIN_CLUSTER: ${{ secrets.JOIN_CLUSTER }}
         run: |
           # Create SSH key file
           echo "$SSH_PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
 
           # SSH into worker node and configure
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ matrix.worker_user }}@${{ matrix.worker_ip }} <<'EOF'
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ env.WORKER_USER }}@${{ env.WORKER_IP }} <<'EOF'
             # Add user to microk8s group
-            sudo usermod -a -G microk8s ${{ matrix.worker_user }}
+            sudo usermod -a -G microk8s ${{ env.WORKER_USER }}
 
             # Create .kube directory
             mkdir -p ~/.kube
-            sudo chown -R ${{ matrix.worker_user }} ~/.kube
+            sudo chown -R ${{ env.WORKER_USER }} ~/.kube
 
             # Activate group change
             newgrp microk8s
 
             # Join cluster
-            $JOIN_CLUSTER
+            ${{ env.JOIN_CLUSTER }}
           EOF
