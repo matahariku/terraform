@@ -10,12 +10,15 @@ data "cloudinit_config" "gitea" {
   }
 }
 
-resource "aws_eip" "gitea" {
-  allocation_id = "eipalloc-228b059f-a4bd-4a73-90d9-40871c7a1bbd" 
-  instance      = module.gitea.id
-  domain        = "vpc"
-  tags          = local.tags
+data "aws_eip" "gitea" {
+  id = "eipalloc-228b059f-a4bd-4a73-90d9-40871c7a1bbd" 
 }
+
+resource "aws_eip_association" "gitea_association" {
+  allocation_id = data.aws_eip.gitea.id
+  instance_id   = module.gitea.id
+}
+
 
 module "gitea" {
   depends_on = [module.vpc]
