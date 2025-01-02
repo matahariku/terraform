@@ -30,7 +30,7 @@ jobs:
             sudo microk8s enable dns storage
             sudo microk8s enable ha-cluster
             sudo microk8s add-node > /tmp/join_token.txt
-EOF
+          EOF
 
       - name: Retrieve Join Token
         env:
@@ -43,10 +43,10 @@ EOF
           scp -o StrictHostKeyChecking=no -i private_key.pem $MASTER_USER@$MASTER_IP:/tmp/join_token.txt join_token.txt
 
       - name: Save Join Token
-        uses: google-github-actions/upload-secret-manager@v0
-        with:
-          secret: JOIN_TOKEN
-          value: ${{ steps.retrieve_join_token.outputs.join_token }}
+        run: |
+          cat join_token.txt
+        env:
+          JOIN_TOKEN: ${{ secrets.JOIN_TOKEN }}
 
   setup-workers:
     name: Setup Worker Nodes (WORKER1 & WORKER2)
@@ -72,7 +72,7 @@ EOF
             sudo apt update && sudo apt upgrade -y
             sudo snap install microk8s --classic
             sudo microk8s join $MASTER_IP:25000/$JOIN_TOKEN
-EOF
+          EOF
 
       - name: Add Worker Node 2 (WORKER2)
         env:
@@ -88,4 +88,4 @@ EOF
             sudo apt update && sudo apt upgrade -y
             sudo snap install microk8s --classic
             sudo microk8s join $MASTER_IP:25000/$JOIN_TOKEN
-EOF
+          EOF
