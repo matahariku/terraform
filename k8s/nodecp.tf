@@ -10,12 +10,15 @@ data "cloudinit_config" "controlplan" {
   }
 }
 
-resource "aws_eip" "controlplan" {
-  allocation_id = "eipalloc-b1416146-bb57-410a-994f-2656a786cb98" 
-  instance      = module.cpnode1.id
-  domain        = "vpc"
-  tags          = local.tags
+data "aws_eip" "controlplan" {
+  id = "eipalloc-b1416146-bb57-410a-994f-2656a786cb98" 
 }
+
+resource "aws_eip_association" "controlplan_association" {
+  allocation_id = data.aws_eip.controlplan.id
+  instance_id   = module.cpnode1.id
+}
+
 
 module "cpnode1" {
   depends_on = [
