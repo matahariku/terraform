@@ -1,7 +1,7 @@
-name: Setup MongoDB and Grafana with Ansible
+name: Setup MongoDB with Ansible
 
 on:
-  workflow_dispatch: # Untuk menjalankan manual
+  workflow_dispatch:  # Untuk menjalankan manual
 
 jobs:
   setup_instances:
@@ -23,7 +23,7 @@ jobs:
         run: |
           pip3 install ansible
           ansible --version
-   
+
       # 4. Set Up SSH
       - name: Configure SSH
         run: |
@@ -42,11 +42,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ubuntu@34.230.198.148 "echo 'Connection to MongoDB Successful!'"
 
-      - name: Test SSH Connection to Grafana
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ec2-user@3.219.134.157 "echo 'Connection to Grafana Successful!'"
-
-      # 6. Run Ansible Playbook
+      # 6. Run Ansible Playbook (for MongoDB)
       - name: Run Ansible Playbook
         run: |
           ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml

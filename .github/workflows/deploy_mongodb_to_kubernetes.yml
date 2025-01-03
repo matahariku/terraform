@@ -1,0 +1,104 @@
+name: Deploy MongoDB to Kubernetes
+
+on:
+  workflow_dispatch:  # Allows manual triggering
+    inputs:
+      kubeconfig:
+        description: "Kubeconfig file (optional override)"
+        required: false
+
+jobs:
+  deploy-mongodb:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.30.8'
+
+    - name: Configure kubeconfig
+      run: |
+        mkdir -p $HOME/.kube
+        if [[ "${{ github.event.inputs.kubeconfig }}" ]]; then
+          echo "${{ github.event.inputs.kubeconfig }}" > $HOME/.kube/config
+        else
+          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+        fi
+
+    - name: Verify Kubernetes Nodes
+      run: |
+        kubectl get nodes
+
+    - name: Apply Headless Service for MongoDB
+      run: |
+        cat <<EOF | kubectl apply -f -
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: mongodb
+          namespace: default
+        spec:
+          clusterIP: None  # Headless service
+          ports:
+          - port: 27017
+            targetPort: 27017
+          selector:
+            app: mongodb
+        EOF
+
+    - name: Apply MongoDB StatefulSet
+      run: |
+        cat <<EOF | kubectl apply -f -
+        apiVersion: apps/v1
+        kind: StatefulSet
+        metadata:
+          name: mongodb
+          namespace: default
+          labels:
+            app: mongodb
+        spec:
+          serviceName: mongodb
+          replicas: 3
+          selector:
+            matchLabels:
+              app: mongodb
+          template:
+            metadata:
+              labels:
+                app: mongodb
+            spec:
+              containers:
+              - name: mongodb
+                image: mongo:latest
+                ports:
+                - containerPort: 27017
+                env:
+                - name: MONGO_INITDB_ROOT_USERNAME
+                  value: "root"
+                - name: MONGO_INITDB_ROOT_PASSWORD
+                  value: "devops"
+                - name: MONGO_REPLICA_SET_NAME
+                  value: "rs0"
+                volumeMounts:
+                - name: mongodb-data
+                  mountPath: /data/db
+          volumeClaimTemplates:
+          - metadata:
+              name: mongodb-data
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 10Gi
+        EOF
+
+    - name: Verify StatefulSet and Service
+      run: |
+        kubectl get statefulset
+        kubectl get svc
+        kubectl get pods

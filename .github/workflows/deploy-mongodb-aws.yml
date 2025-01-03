@@ -1,0 +1,48 @@
+name: Deploy MongoDB on AWS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-mongodb-aws:
+    name: Deploy MongoDB to AWS
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Install Minikube
+      - name: Install Minikube
+        run: |
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+      # 3. Start Minikube Cluster
+      - name: Start AWS Minikube Cluster
+        run: |
+          minikube start --profile aws-cluster --kubernetes-version=v1.26.0 --cpus=2 --memory=4g --driver=docker
+
+      # 4. Configure Kubectl
+      - name: Configure Kubectl for AWS
+        run: |
+          minikube kubectl -- --context=aws-cluster config use-context aws-cluster
+
+      # 5. Deploy MongoDB StatefulSet
+      - name: Deploy MongoDB StatefulSet
+        run: |
+          minikube kubectl -- --context=aws-cluster apply -f ./minikube/mongo-statefulset-aws.yaml
+
+      # 6. Initiate Replica Set
+      - name: Initiate Replica Set
+        run: |
+          minikube kubectl -- --context=aws-cluster exec -it mongo-0 -n mongo-namespace -- mongo --eval '
+            rs.initiate({
+              _id: "rs0",
+              members: [
+                { _id: 0, host: "mongo-0.mongo-service.mongo-namespace.svc.cluster.local:27017" },
+                { _id: 1, host: "EC2_PUBLIC_IP_MONGODB:27017" } // OVH Secondary Node
+              ]
+            });
+          '

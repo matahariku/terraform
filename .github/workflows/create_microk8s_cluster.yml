@@ -1,0 +1,51 @@
+name: Create MicroK8s Cluster
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-master:
+    name: Setup MicroK8s Master Node (MONGODB)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install SSH Client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-client
+
+      - name: Setup Master Node (MONGODB)
+        env:
+          MASTER_IP: ${{ secrets.EC2_PUBLIC_IP_MONGODB }}
+          MASTER_USER: ${{ secrets.EC2_USER_MONGODB }}
+          SSH_PRIVATE_KEY: ${{ secrets.KEY_BLOC4 }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          ssh -o StrictHostKeyChecking=no -i private_key.pem $MASTER_USER@$MASTER_IP <<EOF
+            sudo apt update && sudo apt upgrade -y
+            sudo snap install microk8s --classic
+            sudo microk8s enable dns storage
+            sudo microk8s enable ha-cluster
+            sudo microk8s add-node > /tmp/join_token.txt
+          EOF
+
+      - name: Retrieve Join Token
+        env:
+          MASTER_IP: ${{ secrets.EC2_PUBLIC_IP_MONGODB }}
+          MASTER_USER: ${{ secrets.EC2_USER_MONGODB }}
+          SSH_PRIVATE_KEY: ${{ secrets.KEY_BLOC4 }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          scp -o StrictHostKeyChecking=no -i private_key.pem $MASTER_USER@$MASTER_IP:/tmp/join_token.txt join_token.txt
+
+      - name: Save Join Token
+        run: |
+          cat join_token.txt
+        env:
+          JOIN_TOKEN: ${{ secrets.JOIN_TOKEN }}
+
+  

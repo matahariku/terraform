@@ -5,12 +5,11 @@ on:
 
 jobs:
   test:
-    runs-on: 
-      - self-hosted
-      - debian
+    runs-on: self-hosted
+  
 
     steps:
       - name: Test Runner Connection
         run: |
-          echo "Runner aktif dan berjalan!"
+          echo "Runner ça marche !"
           uname -a

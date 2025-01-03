@@ -5,6 +5,7 @@ roles:
     version: main
     path: ansible/roles/mongodb
 
+roles:
   - name: grafana
     src: https://github.com/matahariku/cafe-nangka.git
     scm: git

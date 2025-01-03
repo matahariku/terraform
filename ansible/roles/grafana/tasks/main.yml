@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 - block:
     - name: Add Grafana repository
       copy:
@@ -32,6 +33,8 @@
 ---
 # tasks/main.yml
 
+=======
+>>>>>>> 30b04ae6f028eaa761a88d059340a5a33b5146ff
 - name: Install Grafana Dependencies
   ansible.builtin.yum:
     name:
