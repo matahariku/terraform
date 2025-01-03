@@ -1,11 +1,13 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: mongodb
+  namespace: default
   labels:
     app: mongodb
 spec:
-  replicas: 1
+  serviceName: mongodb
+  replicas: 3
   selector:
     matchLabels:
       app: mongodb
@@ -24,16 +26,17 @@ spec:
           value: "root"
         - name: MONGO_INITDB_ROOT_PASSWORD
           value: "devops"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mongodb
-spec:
-  selector:
-    app: mongodb
-  ports:
-    - port: 27017
-      targetPort: 27017
-      nodePort: 30017
-  type: NodePort
+        - name: MONGO_REPLICA_SET_NAME
+          value: "rs0"
+        volumeMounts:
+        - name: mongodb-data
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-data
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
