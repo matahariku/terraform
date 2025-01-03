@@ -11,7 +11,7 @@ data "cloudinit_config" "controlplan" {
 }
 
 resource "aws_eip_association" "controlplan" {
-  allocation_id = "eipalloc-09446d85fdcd42190" 
+  allocation_id = "eipalloc-06472b648432f45d4" 
   instance_id   = module.cpnode1.id
 }
 
