@@ -11,7 +11,7 @@ data "cloudinit_config" "gitea" {
 }
 
 resource "aws_eip_association" "gitea" {
-  allocation_id = "eipalloc-0bd8734d0a6e31dcc" 
+  allocation_id = "eipalloc-09d22599b303e0f28" 
   instance_id   = module.gitea.id
 }
 
