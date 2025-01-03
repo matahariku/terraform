@@ -1,63 +1,63 @@
-- name: Install Required Packages for Docker
-  ansible.builtin.apt:
-    name: "{{ item }}"
-    state: present
-    update_cache: yes
-  loop:
-    - apt-transport-https
-    - ca-certificates
-    - curl
-    - software-properties-common
-  when: inventory_hostname in groups['mongodb']
+- block:
+    - name: Install Required Dependencies for Docker
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+        update_cache: yes
 
-- name: Add Docker GPG Key
-  ansible.builtin.apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
-  when: inventory_hostname in groups['mongodb']
+    - name: Fix deprecated GPG keyring issue
+      ansible.builtin.shell: |
+        mkdir -p /usr/share/keyrings
+        wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor > /usr/share/keyrings/grafana.gpg
+        echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee /etc/apt/sources.list.d/grafana.list
+      when: ansible_distribution == "Ubuntu"
 
-- name: Add Docker Repository
-  ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-    state: present
-  when: inventory_hostname in groups['mongodb']
+    - name: Add Docker GPG Key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
 
-- name: Install Docker
-  ansible.builtin.apt:
-    name: docker-ce
-    state: present
-  when: inventory_hostname in groups['mongodb']
+    - name: Add Docker Repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/grafana.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
 
-- name: Start Docker Service
-  ansible.builtin.service:
-    name: docker
-    state: started
-    enabled: yes
-  when: inventory_hostname in groups['mongodb']
+    - name: Install Docker
+      ansible.builtin.apt:
+        name: docker-ce
+        state: present
 
-- name: Pull MongoDB Docker Image
-  ansible.builtin.docker_image:
-    name: "{{ docker_image }}"
-    source: pull
-  when: inventory_hostname in groups['mongodb']
+    - name: Start Docker Service
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
 
-- name: Stop Existing MongoDB Container (if any)
-  ansible.builtin.shell: |
-    docker stop mongodb || true
-    docker rm mongodb || true
-  when: inventory_hostname in groups['mongodb']
+    - name: Pull MongoDB Docker Image
+      ansible.builtin.docker_image:
+        name: "{{ docker_image }}"
+        source: pull
 
-- name: Run MongoDB Docker Container
-  ansible.builtin.docker_container:
-    name: "{{ docker_container_name }}"
-    image: "{{ docker_image }}"
-    state: started
-    restart_policy: always
-    ports:
-      - "{{ docker_port }}:27017"
-    volumes:
-      - "mongodb_data:/data/db"
-    env:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: devops
-  when: inventory_hostname in groups['mongodb']
+    - name: Stop Existing MongoDB Container (if any)
+      ansible.builtin.shell: |
+        docker stop mongodb || true
+        docker rm mongodb || true
+
+    - name: Run MongoDB Docker Container
+      ansible.builtin.docker_container:
+        name: "{{ docker_container_name }}"
+        image: "{{ docker_image }}"
+        state: started
+        restart_policy: always
+        ports:
+          - "{{ docker_port }}:27017"
+        volumes:
+          - "mongodb_data:/data/db"
+        env:
+          MONGO_INITDB_ROOT_USERNAME: root
+          MONGO_INITDB_ROOT_PASSWORD: devops
+  when: ansible_distribution == "Ubuntu"

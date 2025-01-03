@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 - block:
     - name: Add Grafana repository
       copy:
@@ -27,4 +28,49 @@
         dest: /etc/grafana/grafana.ini
       notify:
         - Restart Grafana
+=======
+---
+# tasks/main.yml
+
+- name: Install Grafana Dependencies
+  ansible.builtin.yum:
+    name:
+      - fontconfig
+      - libfontconfig
+      - libxslt
+    state: present
+  when: ansible_distribution == "Amazon"
+
+- name: Add Grafana repository
+  ansible.builtin.copy:
+    content: |
+      [grafana]
+      name=Grafana OSS
+      baseurl=https://packages.grafana.com/oss/rpm
+      enabled=1
+      gpgcheck=1
+      gpgkey=https://packages.grafana.com/gpg.key
+    dest: /etc/yum.repos.d/grafana.repo
+  when: ansible_distribution == "Amazon"
+
+- name: Install Grafana
+  ansible.builtin.dnf:
+    name: grafana
+    state: present
+  when: ansible_distribution == "Amazon"
+
+- name: Enable and start Grafana service
+  ansible.builtin.systemd:
+    name: grafana-server
+    state: started
+    enabled: true
+  when: ansible_distribution == "Amazon"
+
+- name: Configure Grafana
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+  notify:
+    - Restart Grafana
+>>>>>>> a84bed66fbd52ac3ad7bc735e825aec54431bf54
   when: ansible_distribution == "Amazon"

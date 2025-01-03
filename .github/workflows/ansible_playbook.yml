@@ -23,7 +23,7 @@ jobs:
         run: |
           pip3 install ansible
           ansible --version
-
+   
       # 4. Set Up SSH
       - name: Configure SSH
         run: |
@@ -39,12 +39,14 @@ jobs:
 
       # 5. Debug SSH Connection
       - name: Test SSH Connection to MongoDB
-        run: ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ubuntu@34.230.198.148 "echo 'Connection to MongoDB Successful!'"
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ubuntu@34.230.198.148 "echo 'Connection to MongoDB Successful!'"
 
       - name: Test SSH Connection to Grafana
-        run: ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ec2-user@3.219.134.157 "echo 'Connection to Grafana Successful!'"
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/KEY_BLOC4.pem ec2-user@3.219.134.157 "echo 'Connection to Grafana Successful!'"
 
       # 6. Run Ansible Playbook
       - name: Run Ansible Playbook
         run: |
-          ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml 
+          ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/setup.yml

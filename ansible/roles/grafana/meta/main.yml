@@ -8,5 +8,8 @@ galaxy_info:
     - name: Amazon
       versions:
         - 2023
+<<<<<<< HEAD
 
 dependencies: []
+=======
+>>>>>>> a84bed66fbd52ac3ad7bc735e825aec54431bf54

@@ -1,5 +1,5 @@
 # handlers/main.yml
-- name: Restart Grafana
-  service:
-    name: grafana-server
+- name: Restart Grafana Docker Container
+  ansible.builtin.docker_container:
+    name: "{{ grafana_container_name }}"
     state: restarted
