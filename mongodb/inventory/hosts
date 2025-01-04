@@ -1,0 +1,5 @@
+[grafana_instance]
+18.204.145.108 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/aws_key.pem
+
+[k8s_master]
+98.83.216.2 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/KEY_BLOC4.pem
