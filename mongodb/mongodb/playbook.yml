@@ -1,0 +1,12 @@
+---
+- name: Install and configure Grafana
+  hosts: grafana_instance
+  become: yes
+  roles:
+    - grafana
+
+- name: Install and configure Prometheus
+  hosts: grafana_instance
+  become: yes
+  roles:
+    - prometheus
