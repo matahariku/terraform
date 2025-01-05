@@ -30,17 +30,17 @@ jobs:
       # 4. List Terraform State Resources
       - name: List Terraform State Resources
         run: terraform state list
-        working-directory: terraform/aws
+        working-directory: k8s/
 
       # 5. Remove VPC Resource from Terraform State (if needed)
       - name: Remove VPC from Terraform State
         run: terraform state rm aws_vpc.nangka || echo "Resource not found, skipping."
-        working-directory: terraform/aws
+        working-directory: k8s/
 
       # 6. Terraform Destroy
       - name: Destroy Terraform Resources
         run: terraform destroy -auto-approve
-        working-directory: terraform/aws
+        working-directory: k8s/
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
